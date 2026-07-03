@@ -2,26 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@layer base {
+  /* ── Public / Portfolio theme (sky-blue, light) ── */
+  .theme-public {
+    --bg-color: #F7FAFC;
+    --text-color: #475569;
+    --primary-color: #38BDF8;
+    --card-bg: #FFFFFF;
+    --card-border-color: transparent;
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --card-radius: 0.75rem;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* ── Neon OS / Material 3 Dark Theme ── */
+  .theme-os {
+    --bg-color: #131315;
+    --text-color: #e5e1e4;
+
+    /* Surfaces */
+    --surface: #131315;
+    --surface-dim: #131315;
+    --surface-bright: #39393b;
+    --surface-container-lowest: #0e0e10;
+    --surface-container-low: #1c1b1d;
+    --surface-container: #201f21;
+    --surface-container-high: #2a2a2c;
+    --surface-container-highest: #353437;
+    --surface-variant: #353437;
+    --surface-border: #1f2026;
+    --surface-tint: #00dbe7;
+
+    /* On-Surface text */
+    --on-surface: #e5e1e4;
+    --on-surface-variant: #b9cacb;
+    --on-background: #e5e1e4;
+
+    /* Primary — Electric Cyan */
+    --primary-color: #e1fdff;
+    --primary-container: #00f2ff;
+    --on-primary: #00363a;
+    --on-primary-container: #006a71;
+    --primary-fixed: #74f5ff;
+    --primary-fixed-dim: #00dbe7;
+
+    /* Secondary — Deep Violet */
+    --secondary: #d1bcff;
+    --secondary-container: #7000ff;
+    --on-secondary-container: #ddcdff;
+
+    /* Tertiary — Amber */
+    --tertiary: #fff6e4;
+    --tertiary-container: #fed83a;
+    --on-tertiary-container: #725e00;
+
+    /* Error */
+    --error: #ffb4ab;
+    --error-container: #93000a;
+    --on-error-container: #ffdad6;
+
+    /* Outline */
+    --outline: #849495;
+    --outline-variant: #3a494b;
+
+    /* Inverse */
+    --inverse-surface: #e5e1e4;
+    --inverse-on-surface: #313032;
+
+    /* Card backward compat */
+    --card-bg: #131315;
+    --card-border-color: #1f2026;
+    --card-shadow: none;
+    --card-radius: 0.5rem;
+
+    /* Effects */
+    --glow-primary: 0 0 12px rgba(0, 242, 255, 0.3);
+    --glow-primary-strong: 0 0 12px rgba(0, 242, 255, 0.5);
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .glass-panel {
+    background: rgba(19, 19, 21, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .neon-glow {
+    box-shadow: 0 0 12px rgba(0, 242, 255, 0.3);
+  }
+
+  .neon-glow-hover {
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  .neon-glow-hover:hover {
+    box-shadow: 0 0 12px rgba(0, 242, 255, 0.5);
+    border-color: #00f2ff;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #3a494b;
+    border-radius: 2px;
   }
 }
