@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Star, Zap } from "lucide-react";
+import { getMediaEntries } from "@/lib/actions/media";
 
 type TabType = "Watched" | "Watching/Reading" | "Watchlist";
 
@@ -19,111 +20,6 @@ interface MediaItem {
   year?: string;
 }
 
-const mockMedia: MediaItem[] = [
-  // Currently Consuming
-  {
-    id: "1",
-    title: "The Architecture of Happiness",
-    creator: "Alain de Botton",
-    type: "Book",
-    status: "Watching/Reading",
-    progress: "64%",
-    progressPercent: 64,
-    coverImage: "https://picsum.photos/seed/book1/400/600",
-  },
-  {
-    id: "2",
-    title: "Severance (Season 2)",
-    creator: "Apple TV+",
-    type: "Show",
-    status: "Watching/Reading",
-    progress: "Ep 3 / 10",
-    progressPercent: 30,
-    coverImage: "https://picsum.photos/seed/show1/400/600",
-  },
-  
-  // Watched / Read
-  {
-    id: "3",
-    title: "Dune: Part Two",
-    creator: "Denis Villeneuve",
-    type: "Movie",
-    status: "Watched",
-    rating: 4.5,
-    year: "2024",
-    coverImage: "https://picsum.photos/seed/movie1/400/600",
-  },
-  {
-    id: "4",
-    title: "Tomorrow, and Tomorrow, and Tomorrow",
-    creator: "Gabrielle Zevin",
-    type: "Book",
-    status: "Watched",
-    rating: 5.0,
-    year: "2022",
-    coverImage: "https://picsum.photos/seed/book2/400/600",
-  },
-  {
-    id: "5",
-    title: "Succession",
-    creator: "HBO",
-    type: "Show",
-    status: "Watched",
-    rating: 4.9,
-    year: "2023",
-    coverImage: "https://picsum.photos/seed/show2/400/600",
-  },
-  {
-    id: "6",
-    title: "Perfect Days",
-    creator: "Wim Wenders",
-    type: "Movie",
-    status: "Watched",
-    rating: 4.5,
-    year: "2023",
-    coverImage: "https://picsum.photos/seed/movie2/400/600",
-  },
-  {
-    id: "7",
-    title: "The Creative Act",
-    creator: "Rick Rubin",
-    type: "Book",
-    status: "Watched",
-    rating: 5.0,
-    year: "2023",
-    coverImage: "https://picsum.photos/seed/book3/400/600",
-  },
-
-  // Watchlist
-  {
-    id: "8",
-    title: "Megalopolis",
-    creator: "Francis Ford Coppola",
-    type: "Movie",
-    status: "Watchlist",
-    year: "2024",
-    coverImage: "https://picsum.photos/seed/movie3/400/600",
-  },
-  {
-    id: "9",
-    title: "The Sympathizer",
-    creator: "HBO",
-    type: "Show",
-    status: "Watchlist",
-    year: "2024",
-    coverImage: "https://picsum.photos/seed/show3/400/600",
-  },
-  {
-    id: "10",
-    title: "Neuromancer",
-    creator: "William Gibson",
-    type: "Book",
-    status: "Watchlist",
-    year: "1984",
-    coverImage: "https://picsum.photos/seed/book4/400/600",
-  }
-];
-
 const spotifyCurations = [
   { id: "s1", title: "Ambient Focus", desc: "Deep textures for deep work", img: "https://picsum.photos/seed/spot1/400/400" },
   { id: "s2", title: "Late Night Jazz", desc: "A collection of modern classics", img: "https://picsum.photos/seed/spot2/400/400" },
@@ -139,9 +35,42 @@ const visualSets = [
 
 export function MediaTracker() {
   const [activeTab, setActiveTab] = useState<TabType>("Watched");
+  const [mediaEntries, setMediaEntries] = useState<MediaItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const currentlyConsuming = mockMedia.filter(m => m.status === "Watching/Reading");
-  const filteredMedia = mockMedia.filter(m => m.status === activeTab);
+  useEffect(() => {
+    async function loadMedia() {
+      try {
+        const data = await getMediaEntries();
+        const formatted = data.map((d: Record<string, unknown>) => ({
+          id: String(d.id),
+          title: String(d.title),
+          creator: "Unknown",
+          type: d.type === 'book' ? 'Book' : 'Movie',
+          status: d.status === 'watched' ? 'Watched' : d.status === 'watching' ? 'Watching/Reading' : 'Watchlist',
+          rating: d.rating ? Number(d.rating) : undefined,
+          coverImage: d.cover_url || "https://picsum.photos/seed/default/400/600",
+        })) as MediaItem[];
+        setMediaEntries(formatted);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadMedia();
+  }, []);
+
+  const currentlyConsuming = mediaEntries.filter(m => m.status === "Watching/Reading");
+  const filteredMedia = mediaEntries.filter(m => m.status === activeTab);
+
+  if (loading) {
+    return (
+      <div className="flex h-64 w-full justify-center items-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-24 pb-12">

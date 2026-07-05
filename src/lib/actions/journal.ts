@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function getJournalEntries() {
+export async function getJournalEntries(): Promise<Record<string, unknown>[]> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -21,8 +21,22 @@ export async function getJournalEntries() {
     console.error("Error fetching journal entries:", error);
     return [];
   }
+  const entriesWithUrls = await Promise.all(data.map(async (entry: Record<string, unknown>) => {
+    let photoUrls: string[] = [];
+    const photos = entry.photos as string[] | undefined;
+    if (photos && photos.length > 0) {
+      const { data: signedUrls } = await supabase.storage
+        .from("journal-photos")
+        .createSignedUrls(photos, 604800); // 7 days
 
-  return data;
+      if (signedUrls) {
+        photoUrls = signedUrls.map((s: { signedUrl: string | null }) => s.signedUrl).filter(Boolean) as string[];
+      }
+    }
+    return { ...entry, photoUrls };
+  }));
+
+  return entriesWithUrls;
 }
 
 export async function saveJournalEntry(id: string | null, entry: { title: string; body: string; date: string }) {
@@ -76,5 +90,47 @@ export async function deleteJournalEntry(id: string) {
     .eq("user_id", user.id);
 
   if (error) throw error;
+  revalidatePath("/os/journal");
+}
+
+export async function uploadJournalPhoto(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  const file = formData.get("file") as File;
+  const entryId = formData.get("entryId") as string;
+  if (!file || !entryId) throw new Error("Missing file or entryId");
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+  const filePath = `${user.id}/${entryId}/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("journal-photos")
+    .upload(filePath, file);
+
+  if (uploadError) {
+    console.error("Upload error:", uploadError);
+    throw uploadError;
+  }
+
+  const { data: entry, error: fetchError } = await supabase
+    .from("journal_entries")
+    .select("photos")
+    .eq("id", entryId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  const currentPhotos = entry.photos || [];
+  const { error: updateError } = await supabase
+    .from("journal_entries")
+    .update({ photos: [...currentPhotos, filePath] })
+    .eq("id", entryId);
+
+  if (updateError) throw updateError;
+
   revalidatePath("/os/journal");
 }

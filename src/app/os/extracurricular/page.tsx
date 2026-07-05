@@ -16,23 +16,31 @@ import {
   ImageIcon,
   LayoutGrid
 } from "lucide-react";
-import { getSponsorshipStats, getTeam, getArchive } from "@/lib/mock-data";
-import { getProjects } from "@/lib/actions/projects";
+import { getDirectives, getSponsorshipStats, getTeam, getArchive } from "@/lib/actions/extracurricular";
+import type { SponsorshipStat, TeamMember, ArchivePhoto } from "@/lib/mock-data";
 
-type Project = { id: string; status: string; title: string; description?: string };
+type Directive = { id: string; type: string; typeLabel: string; title: string; subtitle?: string; color: string };
 
 export default function OSExtracurricularPage() {
-  const [directives, setDirectives] = useState<Project[]>([]);
-  const [stats] = useState(getSponsorshipStats());
-  const [team] = useState(getTeam());
-  const [archive] = useState(getArchive());
+  const [directives, setDirectives] = useState<Directive[]>([]);
+  const [stats, setStats] = useState<SponsorshipStat[]>([]);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [archive, setArchive] = useState<ArchivePhoto[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const data = await getProjects();
-        setDirectives(data);
+        const [d, s, t, a] = await Promise.all([
+          getDirectives(),
+          getSponsorshipStats(),
+          getTeam(),
+          getArchive()
+        ]);
+        setDirectives(d);
+        setStats(s);
+        setTeam(t);
+        setArchive(a);
       } catch (e) {
         console.error(e);
       } finally {
@@ -42,18 +50,18 @@ export default function OSExtracurricularPage() {
     loadData();
   }, []);
 
-  const getDirectiveBorderColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'border-primary-container';
-      case 'blocked': return 'border-error-container';
+  const getDirectiveBorderColor = (color: string) => {
+    switch (color) {
+      case 'primary': return 'border-primary-container';
+      case 'tertiary': return 'border-tertiary-container';
       default: return 'border-outline';
     }
   };
 
-  const getDirectiveTextColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'text-primary-container';
-      case 'blocked': return 'text-error-container';
+  const getDirectiveTextColor = (color: string) => {
+    switch (color) {
+      case 'primary': return 'text-primary-container';
+      case 'tertiary': return 'text-tertiary-container';
       default: return 'text-on-surface-variant';
     }
   };
@@ -144,16 +152,16 @@ export default function OSExtracurricularPage() {
               ) : directives.length === 0 ? (
                 <div className="text-on-surface-variant font-mono text-sm text-center py-4">No active directives.</div>
               ) : directives.map(dir => (
-                <div key={dir.id} className={`bg-surface-container-high border-l-2 ${getDirectiveBorderColor(dir.status)} p-3 rounded-r-lg group-hover:bg-surface-variant transition-colors`}>
+                <div key={dir.id} className={`bg-surface-container-high border-l-2 ${getDirectiveBorderColor(dir.color)} p-3 rounded-r-lg group-hover:bg-surface-variant transition-colors`}>
                   <div className="flex justify-between items-start mb-1">
-                    <span className={`font-mono text-[10px] uppercase tracking-widest font-bold ${getDirectiveTextColor(dir.status)}`}>
-                      PROJECT
+                    <span className={`font-mono text-[10px] uppercase tracking-widest font-bold ${getDirectiveTextColor(dir.color)}`}>
+                      {dir.typeLabel}
                     </span>
                     <MoreVertical className="w-4 h-4 text-on-surface-variant" />
                   </div>
                   <p className="font-body text-sm text-on-surface mb-1 font-medium">{dir.title}</p>
-                  {dir.description && (
-                    <span className="font-mono text-xs text-outline line-clamp-1">{dir.description}</span>
+                  {dir.subtitle && (
+                    <span className="font-mono text-xs text-outline line-clamp-1">{dir.subtitle}</span>
                   )}
                 </div>
               ))}

@@ -19,6 +19,7 @@ export default function OSLayout({
           <Link href="/study" className="hover:text-primary transition-colors py-1">Study</Link>
           <Link href="/extracurricular" className="hover:text-primary transition-colors py-1">Extracurricular</Link>
           <Link href="/projects" className="hover:text-primary transition-colors py-1">Projects</Link>
+          <Link href="/finance" className="hover:text-primary transition-colors py-1">Finance</Link>
         </nav>
       </aside>
       <main className="flex-1 flex flex-col relative h-full overflow-hidden">

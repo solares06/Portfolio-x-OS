@@ -13,7 +13,8 @@ import {
   ChevronDown,
   ArrowRight
 } from "lucide-react";
-import { getProjectDomains, ProjectDomain, ProjectData } from "@/lib/mock-data";
+import { getProjectDomains } from "@/lib/actions/projects";
+import type { ProjectDomain, ProjectData } from "@/lib/mock-data";
 
 function ProjectCard({ project }: { project: ProjectData }) {
   const getPhaseColors = (color: string) => {
@@ -153,10 +154,26 @@ function DomainSection({ domain, expanded, onToggle }: { domain: ProjectDomain, 
 }
 
 export default function OSProjectsPage() {
-  const [domains] = useState(getProjectDomains());
-  const [expandedDomains, setExpandedDomains] = useState<Record<string, boolean>>(
-    domains.reduce((acc, d) => ({ ...acc, [d.id]: !!d.defaultExpanded }), {})
-  );
+  const [domains, setDomains] = useState<ProjectDomain[]>([]);
+  const [expandedDomains, setExpandedDomains] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    async function load() {
+      try {
+        const data = await getProjectDomains();
+        setDomains(data);
+        setExpandedDomains(
+          data.reduce((acc: Record<string, boolean>, d: ProjectDomain) => ({ ...acc, [d.id]: !!d.defaultExpanded }), {})
+        );
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   const toggleDomain = (id: string) => {
     setExpandedDomains(prev => ({
@@ -164,6 +181,8 @@ export default function OSProjectsPage() {
       [id]: !prev[id]
     }));
   };
+
+  if (loading) return <div className="p-8">Loading Projects...</div>;
 
   return (
     <div className="p-8 h-full w-full overflow-y-auto animate-in fade-in duration-500 custom-scrollbar relative z-0">

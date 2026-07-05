@@ -7,26 +7,48 @@ import {
   Calendar,
   Plus,
 } from "lucide-react";
-import { getJournalEntries, saveJournalEntry } from "@/lib/actions/journal";
+import { getJournalEntries, saveJournalEntry, uploadJournalPhoto } from "@/lib/actions/journal";
+import Image from "next/image";
 
-type JournalEntry = { id: string; title: string; body: string; date: string; created_at: string; mood?: string };
+type JournalEntry = { id: string; title: string; body: string; date: string; created_at: string; mood?: string; photoUrls?: string[] };
 
 export default function OSJournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // For auto-saving
   const [saveStatus, setSaveStatus] = useState<"Saved" | "Saving..." | "Unsaved">("Saved");
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !activeEntryId) return;
+    const file = e.target.files[0];
+    
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("entryId", activeEntryId);
+      
+      await uploadJournalPhoto(formData);
+      
+      const data = await getJournalEntries();
+      setEntries(data as JournalEntry[]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     async function loadEntries() {
       try {
         const data = await getJournalEntries();
-        setEntries(data);
+        setEntries(data as JournalEntry[]);
         if (data.length > 0) {
-          setActiveEntryId(data[0].id);
+          setActiveEntryId(String(data[0].id));
         }
       } catch (e) {
         console.error(e);
@@ -210,6 +232,45 @@ export default function OSJournalPage() {
               value={activeEntry.body || ""}
               onChange={(e) => handleEntryUpdate("body", e.target.value)}
             />
+
+            {/* Daily Visuals */}
+            <div className="mt-8 border-t border-surface-variant pt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-xl text-primary font-bold">Daily Visuals</h3>
+                <div className="relative">
+                  <input 
+                    type="file" 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    disabled={uploading}
+                  />
+                  <button className="flex items-center gap-2 bg-surface-container-high hover:bg-primary-container/20 border border-outline-variant hover:border-primary-container transition-all px-4 py-2 rounded text-sm font-mono text-on-surface-variant hover:text-primary-container relative z-0">
+                    <Plus className="w-4 h-4" />
+                    {uploading ? "Uploading..." : "Add Photo"}
+                  </button>
+                </div>
+              </div>
+
+              {activeEntry.photoUrls && activeEntry.photoUrls.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {activeEntry.photoUrls.map((url, idx) => (
+                    <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-outline-variant group">
+                      <Image 
+                        src={url} 
+                        alt="Journal Photo" 
+                        fill 
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-32 border border-dashed border-outline-variant rounded-lg text-on-surface-variant font-mono text-sm bg-surface-container-lowest">
+                  No visuals attached to this entry yet.
+                </div>
+              )}
+            </div>
           </div>
         </section>
       ) : (
