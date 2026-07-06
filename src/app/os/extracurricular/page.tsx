@@ -14,10 +14,22 @@ import {
   Users,
   Mail,
   ImageIcon,
-  LayoutGrid
+  LayoutGrid,
+  Plus,
+  Edit2,
+  Trash2
 } from "lucide-react";
-import { getDirectives, getSponsorshipStats, getTeam, getArchive } from "@/lib/actions/extracurricular";
+import { 
+  getDirectives, getSponsorshipStats, getTeam, getArchive,
+  createDirective, editDirective, deleteDirective,
+  updateSponsorshipStats,
+  createTeamMember, editTeamMember, deleteTeamMember
+} from "@/lib/actions/extracurricular";
 import type { SponsorshipStat, TeamMember, ArchivePhoto } from "@/lib/mock-data";
+import DirectiveModal from "../components/DirectiveModal";
+import SponsorshipStatsModal from "../components/SponsorshipStatsModal";
+import TeamMemberModal from "../components/TeamMemberModal";
+import ConfirmModal from "@/components/ConfirmModal";
 
 type Directive = { id: string; type: string; typeLabel: string; title: string; subtitle?: string; color: string };
 
@@ -27,6 +39,78 @@ export default function OSExtracurricularPage() {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [archive, setArchive] = useState<ArchivePhoto[]>([]);
   const [loading, setLoading] = useState(true);
+
+  type ConfirmModalState = { isOpen: boolean; type: 'directive' | 'team'; id: string; title: string };
+
+  const [isDirectiveModalOpen, setIsDirectiveModalOpen] = useState(false);
+  const [editingDirective, setEditingDirective] = useState<Directive | null>(null);
+
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [editingTeamMember, setEditingTeamMember] = useState<TeamMember | null>(null);
+
+  const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({ isOpen: false, type: 'directive', id: '', title: '' });
+
+  const refreshData = async () => {
+    const [d, s, t, a] = await Promise.all([ getDirectives(), getSponsorshipStats(), getTeam(), getArchive() ]);
+    setDirectives(d); setStats(s); setTeam(t); setArchive(a);
+  };
+
+  const handleSaveDirective = async (type: string, title: string, detail: string, due_label: string) => {
+    if (editingDirective) {
+      setDirectives(directives.map(d => d.id === editingDirective.id ? { ...d, type, title, subtitle: detail || due_label, typeLabel: type.toUpperCase() + (due_label ? `: ${due_label}` : '') } : d));
+    } else {
+      setDirectives([...directives, { id: Math.random().toString(), type, title, subtitle: detail || due_label, typeLabel: type.toUpperCase(), color: type === 'deadline' ? 'primary' : type === 'meeting' ? 'tertiary' : 'outline' }]);
+    }
+    (async () => {
+      try {
+        if (editingDirective) await editDirective(editingDirective.id, type, title, detail, due_label);
+        else await createDirective(type, title, detail, due_label);
+      } finally { await refreshData(); }
+    })();
+  };
+
+  const handleSaveStats = async (targetAmount: number, activeLeads: number, conversionRate: string, eventReadiness: number) => {
+    setStats([
+      { id: "stat1", label: "TARGET ACQUISITION", value: String(targetAmount), progress: 75, progressColor: "primary" },
+      { id: "stat2", label: "ACTIVE LEADS", value: String(activeLeads), trendText: "UPDATED", trendColor: "primary" },
+      { id: "stat3", label: "CONVERSION RATE", value: conversionRate, trendText: "UPDATED", trendColor: "tertiary" },
+      { id: "stat4", label: "EVENT READINESS", value: String(eventReadiness), progress: eventReadiness, progressColor: "on-surface" }
+    ]);
+    (async () => {
+      try { await updateSponsorshipStats(targetAmount, activeLeads, conversionRate, eventReadiness); }
+      finally { await refreshData(); }
+    })();
+  };
+
+  const handleSaveTeamMember = async (name: string, role: string, avatarUrl?: string) => {
+    if (editingTeamMember) {
+      setTeam(team.map(t => t.id === editingTeamMember.id ? { ...t, name, role, avatarUrl } : t));
+    } else {
+      setTeam([...team, { id: Math.random().toString(), name, role, avatarUrl, initials: name.substring(0, 2).toUpperCase() }]);
+    }
+    (async () => {
+      try {
+        if (editingTeamMember) await editTeamMember(editingTeamMember.id, name, role, avatarUrl);
+        else await createTeamMember(name, role, avatarUrl);
+      } finally { await refreshData(); }
+    })();
+  };
+
+  const handleDelete = async () => {
+    const { type, id } = confirmModal;
+    setConfirmModal({ ...confirmModal, isOpen: false });
+    if (type === 'directive') setDirectives(directives.filter(d => d.id !== id));
+    else setTeam(team.filter(t => t.id !== id));
+    
+    (async () => {
+      try {
+        if (type === 'directive') await deleteDirective(id);
+        else await deleteTeamMember(id);
+      } finally { await refreshData(); }
+    })();
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -142,10 +226,18 @@ export default function OSExtracurricularPage() {
           {/* Active Directives (Mapped to Projects) */}
           <div className="col-span-4 lg:col-span-4 glass-panel rounded-xl p-6 flex flex-col hover:border-primary-container hover:shadow-[0_0_12px_rgba(0,242,255,0.3)] transition-all relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary-container/5 rounded-bl-full blur-xl pointer-events-none"></div>
-            <h3 className="font-display text-xl text-on-surface mb-6 flex items-center gap-2 font-bold">
-              <AlertCircle className="w-6 h-6 text-primary-container" />
-              Active Directives
-            </h3>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold">
+                <AlertCircle className="w-6 h-6 text-primary-container" />
+                Active Directives
+              </h3>
+              <button 
+                onClick={() => { setEditingDirective(null); setIsDirectiveModalOpen(true); }}
+                className="text-on-surface-variant hover:text-primary-container transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
             <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
               {loading ? (
                 <div className="text-on-surface-variant font-mono text-sm text-center py-4">Loading from database...</div>
@@ -157,7 +249,10 @@ export default function OSExtracurricularPage() {
                     <span className={`font-mono text-[10px] uppercase tracking-widest font-bold ${getDirectiveTextColor(dir.color)}`}>
                       {dir.typeLabel}
                     </span>
-                    <MoreVertical className="w-4 h-4 text-on-surface-variant" />
+                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => { setEditingDirective(dir); setIsDirectiveModalOpen(true); }} className="p-1 hover:text-primary-container text-on-surface-variant transition-colors"><Edit2 className="w-3 h-3" /></button>
+                      <button onClick={() => setConfirmModal({ isOpen: true, type: 'directive', id: dir.id, title: dir.title })} className="p-1 hover:text-error text-on-surface-variant transition-colors"><Trash2 className="w-3 h-3" /></button>
+                    </div>
                   </div>
                   <p className="font-body text-sm text-on-surface mb-1 font-medium">{dir.title}</p>
                   {dir.subtitle && (
@@ -170,10 +265,18 @@ export default function OSExtracurricularPage() {
 
           {/* Sponsorship Telemetry */}
           <div className="col-span-4 md:col-span-8 lg:col-span-8 glass-panel rounded-xl p-6 flex flex-col hover:border-primary-container hover:shadow-[0_0_12px_rgba(0,242,255,0.3)] transition-all">
-            <h3 className="font-display text-xl text-on-surface mb-6 flex items-center gap-2 font-bold">
-              <Activity className="w-6 h-6 text-primary-container" />
-              Sponsorship Telemetry
-            </h3>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold">
+                <Activity className="w-6 h-6 text-primary-container" />
+                Sponsorship Telemetry
+              </h3>
+              <button 
+                onClick={() => setIsStatsModalOpen(true)}
+                className="text-on-surface-variant hover:text-primary-container transition-colors"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {stats.map(stat => (
                 <div key={stat.id} className="bg-surface-container-high p-4 rounded-lg border border-outline-variant hover:border-primary-container/50 transition-colors">
@@ -226,13 +329,21 @@ export default function OSExtracurricularPage() {
                 <Users className="w-6 h-6 text-primary-container" />
                 Core Operatives
               </h3>
-              <button className="text-on-surface-variant hover:text-primary-container transition-colors">
-                <Filter className="w-5 h-5" />
-              </button>
+              <div className="flex space-x-2">
+                <button className="text-on-surface-variant hover:text-primary-container transition-colors">
+                  <Filter className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => { setEditingTeamMember(null); setIsTeamModalOpen(true); }}
+                  className="text-on-surface-variant hover:text-primary-container transition-colors"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
             </div>
             <div className="flex flex-col gap-3">
               {team.map(member => (
-                <div key={member.id} className="flex items-center gap-4 p-2 bg-surface-container-high rounded border border-transparent hover:border-outline-variant transition-all">
+                <div key={member.id} className="flex items-center gap-4 p-2 bg-surface-container-high rounded border border-transparent hover:border-outline-variant transition-all group">
                   <div className="w-10 h-10 rounded bg-surface-container-lowest border border-outline-variant overflow-hidden shrink-0 flex items-center justify-center text-on-surface-variant font-mono text-sm">
                     {member.avatarUrl ? (
                       <Image src={member.avatarUrl} alt={member.name} width={40} height={40} className="w-full h-full object-cover" />
@@ -244,9 +355,10 @@ export default function OSExtracurricularPage() {
                     <p className="font-body text-base text-on-surface font-semibold truncate">{member.name}</p>
                     <p className="font-mono text-xs text-on-surface-variant truncate">{member.role}</p>
                   </div>
-                  <button className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-lowest hover:bg-primary-container/20 text-on-surface-variant hover:text-primary-container transition-colors shrink-0">
-                    <Mail className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => { setEditingTeamMember(member); setIsTeamModalOpen(true); }} className="p-1.5 hover:bg-primary-container/20 text-on-surface-variant hover:text-primary-container rounded transition-colors"><Edit2 className="w-3 h-3" /></button>
+                    <button onClick={() => setConfirmModal({ isOpen: true, type: 'team', id: member.id, title: member.name })} className="p-1.5 hover:bg-error/20 text-on-surface-variant hover:text-error rounded transition-colors"><Trash2 className="w-3 h-3" /></button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -300,6 +412,42 @@ export default function OSExtracurricularPage() {
 
         </div>
       </div>
+
+      <DirectiveModal
+        isOpen={isDirectiveModalOpen}
+        onClose={() => setIsDirectiveModalOpen(false)}
+        onSave={handleSaveDirective}
+        initialData={editingDirective ? { type: editingDirective.type, title: editingDirective.title, detail: editingDirective.subtitle || '', due_label: editingDirective.typeLabel.split(': ')[1] || '' } : undefined}
+      />
+
+      <SponsorshipStatsModal
+        isOpen={isStatsModalOpen}
+        onClose={() => setIsStatsModalOpen(false)}
+        onSave={handleSaveStats}
+        initialData={stats.length > 0 ? {
+          target_amount: parseInt(stats[0].value) || 0,
+          active_leads: parseInt(stats[1].value) || 0,
+          conversion_rate: stats[2].value || '',
+          event_readiness: parseInt(stats[3].value) || 0
+        } : undefined}
+      />
+
+      <TeamMemberModal
+        isOpen={isTeamModalOpen}
+        onClose={() => setIsTeamModalOpen(false)}
+        onSave={handleSaveTeamMember}
+        initialData={editingTeamMember ? { name: editingTeamMember.name, role: editingTeamMember.role, avatar_url: editingTeamMember.avatarUrl } : undefined}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={handleDelete}
+        title={`Delete ${confirmModal.type === 'directive' ? 'Directive' : 'Operative'}`}
+        message={`Are you sure you want to delete "${confirmModal.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        isDestructive={true}
+      />
     </div>
   );
 }

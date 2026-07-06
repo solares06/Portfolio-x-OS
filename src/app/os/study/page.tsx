@@ -17,12 +17,21 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock as ClockIcon,
-  ListVideo
+  Edit2,
+  Trash2,
+  Plus
 } from "lucide-react";
-import { getSemesterTracker, getWorkspaces } from "@/lib/actions/study";
-import { WorkspaceData, SemesterClass } from "@/lib/mock-data";
+import { 
+  getSemesterTracker,
+  createSemesterClass, editSemesterClass, deleteSemesterClass
+} from "@/lib/actions/study";
+import { SemesterClass } from "@/lib/mock-data";
+import Link from "next/link";
+import SemesterClassModal from "../components/SemesterClassModal";
+import WorkspaceModal from "../components/WorkspaceModal";
+import ConfirmModal from "@/components/ConfirmModal";
 
-function WorkspaceCard({ workspace }: { workspace: WorkspaceData }) {
+function WorkspaceCard({ workspace, onEdit, onDelete }: { workspace: WorkspaceData, onEdit: (w: WorkspaceData) => void, onDelete: (id: string, title: string) => void }) {
   const IconMap: Record<string, React.ElementType> = {
     memory: Cpu,
     data_object: Database
@@ -32,11 +41,12 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceData }) {
   return (
     <section className="glass-panel rounded-theme border border-card-border p-6 flex flex-col gap-4 neon-glow-hover h-[500px]">
       <div className="flex justify-between items-center border-b border-card-border pb-3">
-        <h3 className="font-display text-xl text-foreground flex items-center gap-2 font-bold">
+        <h3 className="font-display text-xl text-foreground flex items-center gap-2 font-bold group-hover:text-primary-container transition-colors">
           <Icon className="w-6 h-6 text-primary-container" />
           {workspace.title}
         </h3>
-        {workspace.progress !== undefined && (
+        <div className="flex items-center gap-2">
+          {workspace.progress !== undefined && (
           <div className="flex items-center gap-3">
             <div className="w-24 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
               <div 
@@ -47,11 +57,16 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceData }) {
             <span className="font-mono text-xs text-primary-container font-bold">{workspace.progress}%</span>
           </div>
         )}
-        {workspace.leetcodeCount !== undefined && (
-          <div className="font-mono text-xs border border-card-border px-2 py-1 rounded bg-surface">
-            LC: <span className="text-primary-container font-bold">{workspace.leetcodeCount}</span>
+          {workspace.leetcodeCount !== undefined && (
+            <div className="font-mono text-xs border border-card-border px-2 py-1 rounded bg-surface">
+              LC: <span className="text-primary-container font-bold">{workspace.leetcodeCount}</span>
+            </div>
+          )}
+          <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+            <button onClick={() => onEdit(workspace)} className="p-1 hover:text-primary-container text-on-surface-variant transition-colors"><Edit2 className="w-4 h-4" /></button>
+            <button onClick={() => onDelete(workspace.id, workspace.title)} className="p-1 hover:text-error text-on-surface-variant transition-colors"><Trash2 className="w-4 h-4" /></button>
           </div>
-        )}
+        </div>
       </div>
 
       <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -108,7 +123,7 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceData }) {
           <div className="border border-card-border rounded bg-surface-container-low p-3 flex flex-col min-h-0">
             <h4 className="font-mono text-xs text-on-surface-variant mb-3 uppercase flex justify-between items-center pb-1 border-b border-card-border/50">
               <span>Lecture Stream</span>
-              <ListVideo className="w-4 h-4" />
+              <Video className="w-4 h-4" />
             </h4>
             <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
               {workspace.videos.map(video => (
@@ -177,26 +192,66 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceData }) {
 
 export default function OSStudyPage() {
   const [semester, setSemester] = useState<SemesterClass[]>([]);
-  const [workspaces, setWorkspaces] = useState<WorkspaceData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [semData, workData] = await Promise.all([
-          getSemesterTracker(),
-          getWorkspaces()
-        ]);
-        setSemester(semData);
-        setWorkspaces(workData);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+  type ConfirmModalState = { isOpen: boolean; type: 'class' | 'workspace'; id: string; title: string };
+  
+  const [isClassModalOpen, setIsClassModalOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState<SemesterClass | null>(null);
+
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState<WorkspaceData | null>(null);
+
+  const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({ isOpen: false, type: 'class', id: '', title: '' });
+
+  const loadData = async () => {
+    try {
+      const semData = await getSemesterTracker();
+      setSemester(semData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
+
+  const handleSaveClass = async (subject: string, instructor: string, next_due: string, next_due_label: string, status: string, notes: string, color: string) => {
+    (async () => {
+      try {
+        if (editingClass) await editSemesterClass(editingClass.id, subject, instructor, next_due, next_due_label, status, notes, color);
+        else await createSemesterClass(subject, instructor, next_due, next_due_label, status, notes, color);
+      } finally { await loadData(); }
+    })();
+  };
+
+  const handleSaveWorkspace = async (title: string, icon: string, progress?: number, leetcode_count?: number) => {
+    (async () => {
+      try {
+        if (editingWorkspace) await editWorkspace(editingWorkspace.id, title, icon, progress, leetcode_count);
+        else await createWorkspace(title, icon, progress, leetcode_count);
+      } finally { await loadData(); }
+    })();
+  };
+
+  const handleDelete = async () => {
+    const { type, id } = confirmModal;
+    setConfirmModal({ ...confirmModal, isOpen: false });
+
+    // Optimistic
+    if (type === 'class') setSemester(semester.filter(c => c.id !== id));
+    else setWorkspaces(workspaces.filter(w => w.id !== id));
+
+    (async () => {
+      try {
+        if (type === 'class') await deleteSemesterClass(id);
+        else await deleteWorkspace(id);
+      } finally { await loadData(); }
+    })();
+  };
 
   if (loading) return <div className="p-8">Loading Study Nexus...</div>;
 
@@ -248,9 +303,14 @@ export default function OSStudyPage() {
               <CalendarDays className="w-6 h-6 text-primary-container" />
               Current Semester Tracker
             </h3>
-            <button className="text-on-surface-variant hover:text-primary-container transition-colors p-1">
-              <Filter className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={() => { setEditingClass(null); setIsClassModalOpen(true); }} className="text-on-surface-variant hover:text-primary-container transition-colors p-1">
+                <Plus className="w-5 h-5" />
+              </button>
+              <button className="text-on-surface-variant hover:text-primary-container transition-colors p-1">
+                <Filter className="w-5 h-5" />
+              </button>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
@@ -309,6 +369,12 @@ export default function OSStudyPage() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-on-surface-variant truncate max-w-[200px]">{cls.notes}</td>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => { setEditingClass(cls); setIsClassModalOpen(true); }} className="p-1 hover:bg-primary-container/20 text-on-surface-variant hover:text-primary-container rounded transition-colors"><Edit2 className="w-4 h-4" /></button>
+                          <button onClick={() => setConfirmModal({ isOpen: true, type: 'class', id: cls.id, title: cls.subject })} className="p-1 hover:bg-error/20 text-on-surface-variant hover:text-error rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
@@ -317,14 +383,88 @@ export default function OSStudyPage() {
           </div>
         </section>
 
+        {/* Workspaces Grid Header */}
+        <div className="flex justify-between items-end mb-4 mt-8">
+          <div>
+            <h2 className="font-display text-3xl font-bold text-foreground">Active Workspaces</h2>
+          </div>
+        </div>
+
         {/* Workspaces Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {workspaces.map((workspace) => (
-            <WorkspaceCard key={workspace.id} workspace={workspace} />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Machine Learning Portal */}
+          <Link href="/os/study/ml" className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
+            <div className="flex items-center gap-3 border-b border-card-border pb-4">
+              <Cpu className="w-8 h-8 text-primary-container" />
+              <h3 className="font-display text-2xl font-bold group-hover:text-primary-container transition-colors">Machine Learning</h3>
+            </div>
+            <p className="text-sm text-on-surface-variant flex-1">
+              Neural networks, deep learning architectures, and data engineering pipelines. Track progress through core ML concepts and active projects.
+            </p>
+            <div className="mt-4 pt-4 border-t border-card-border flex items-center justify-between text-xs font-mono uppercase tracking-widest text-primary-container">
+              <span>Enter Nexus</span>
+              <span className="group-hover:translate-x-1 transition-transform">→</span>
+            </div>
+          </Link>
+
+          {/* DSA Portal */}
+          <Link href="/os/study/dsa" className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
+            <div className="flex items-center gap-3 border-b border-card-border pb-4">
+              <Database className="w-8 h-8 text-primary-container" />
+              <h3 className="font-display text-2xl font-bold group-hover:text-primary-container transition-colors">Data Structures</h3>
+            </div>
+            <p className="text-sm text-on-surface-variant flex-1">
+              Algorithmic problem solving, complexity analysis, and pattern recognition. Track daily problems and core pattern mastery.
+            </p>
+            <div className="mt-4 pt-4 border-t border-card-border flex items-center justify-between text-xs font-mono uppercase tracking-widest text-primary-container">
+              <span>Enter Nexus</span>
+              <span className="group-hover:translate-x-1 transition-transform">→</span>
+            </div>
+          </Link>
+
+          {/* Web Dev Portal */}
+          <Link href="/os/study/web-dev" className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
+            <div className="flex items-center gap-3 border-b border-card-border pb-4">
+              <Clock className="w-8 h-8 text-primary-container" />
+              <h3 className="font-display text-2xl font-bold group-hover:text-primary-container transition-colors">Web Dev</h3>
+            </div>
+            <p className="text-sm text-on-surface-variant flex-1">
+              Full-stack architectures, modern frontend frameworks, and cloud deployments. Track side projects and system design concepts.
+            </p>
+            <div className="mt-4 pt-4 border-t border-card-border flex items-center justify-between text-xs font-mono uppercase tracking-widest text-primary-container">
+              <span>Enter Nexus</span>
+              <span className="group-hover:translate-x-1 transition-transform">→</span>
+            </div>
+          </Link>
         </div>
 
       </div>
+
+      <SemesterClassModal
+        isOpen={isClassModalOpen}
+        onClose={() => setIsClassModalOpen(false)}
+        onSave={handleSaveClass}
+        initialData={editingClass ? { 
+          subject: editingClass.subject, 
+          instructor: editingClass.instructor, 
+          next_due: editingClass.nextDue, 
+          next_due_label: editingClass.nextDueLabel, 
+          status: editingClass.status, 
+          notes: editingClass.notes, 
+          color: editingClass.color 
+        } : undefined}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={handleDelete}
+        title={`Delete ${confirmModal.type === 'class' ? 'Class' : 'Workspace'}`}
+        message={`Are you sure you want to delete "${confirmModal.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        isDestructive={true}
+      />
+
     </div>
   );
 }

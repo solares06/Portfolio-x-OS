@@ -12,8 +12,6 @@ export default function OSLayout({
         <h2 className="font-display font-bold text-2xl text-primary mb-4">OS Dashboard</h2>
         <nav className="flex flex-col space-y-2 font-sans">
           <Link href="/" className="hover:text-primary transition-colors py-1">Dashboard</Link>
-          <Link href="/calendar" className="hover:text-primary transition-colors py-1">Calendar</Link>
-          <Link href="/to-do" className="hover:text-primary transition-colors py-1">To-Do</Link>
           <Link href="/journal" className="hover:text-primary transition-colors py-1">Journal</Link>
           <Link href="/gym" className="hover:text-primary transition-colors py-1">Gym</Link>
           <Link href="/study" className="hover:text-primary transition-colors py-1">Study</Link>

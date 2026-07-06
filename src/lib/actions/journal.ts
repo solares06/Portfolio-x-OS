@@ -39,6 +39,23 @@ export async function getJournalEntries(): Promise<Record<string, unknown>[]> {
   return entriesWithUrls;
 }
 
+export async function createBlankEntry() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("journal_entries")
+    .insert([{ title: "", body: "", date: new Date().toISOString().split('T')[0], user_id: user.id }])
+    .select("id")
+    .single();
+
+  if (error) throw error;
+  revalidatePath("/os/journal");
+  return data.id;
+}
+
 export async function saveJournalEntry(id: string | null, entry: { title: string; body: string; date: string }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

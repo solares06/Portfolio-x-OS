@@ -4,6 +4,7 @@ import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { getPostBySlug, getAllPosts } from "@/lib/mdx";
+import { MDXComponents } from "@/components/MDXComponents";
 
 export function generateStaticParams() {
   const posts = getAllPosts("blog");
@@ -19,13 +20,7 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   };
 }
 
-const components = {
-  h2: (props: React.ComponentProps<"h2">) => <h2 className="font-display text-2xl font-bold mt-12 mb-4 text-gray-900" {...props} />,
-  h3: (props: React.ComponentProps<"h3">) => <h3 className="font-display text-xl font-bold mt-10 mb-4 text-gray-900" {...props} />,
-  p: (props: React.ComponentProps<"p">) => <p className="text-foreground/80 leading-relaxed mb-4" {...props} />,
-  ul: (props: React.ComponentProps<"ul">) => <ul className="list-disc list-inside space-y-2 text-foreground/80 pl-1 mb-4" {...props} />,
-  blockquote: (props: React.ComponentProps<"blockquote">) => <blockquote className="border-l-4 border-primary pl-6 py-2 my-8 text-foreground/70 italic text-lg" {...props} />,
-};
+
 
 export default function BlogPostPage({ params }: { params: { slug: string } }) {
   const post = getPostBySlug("blog", params.slug);
@@ -70,7 +65,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
 
       {/* Post content */}
       <div className="space-y-5">
-        <MDXRemote source={post.content} components={components} />
+        <MDXRemote source={post.content} components={MDXComponents} />
       </div>
 
       {/* Footer divider */}

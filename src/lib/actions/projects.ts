@@ -87,3 +87,87 @@ export async function getProjectDomains(): Promise<ProjectDomain[]> {
     };
   });
 }
+
+// -------------------------------------------------------------
+// CRUD Operations
+// -------------------------------------------------------------
+
+export async function createDomain(name: string, icon: string, status_label: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("project_domains")
+    .insert([{ name, icon, status_label, user_id: user.id }]);
+
+  if (error) throw error;
+}
+
+export async function editDomain(id: string, name: string, icon: string, status_label: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("project_domains")
+    .update({ name, icon, status_label })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function deleteDomain(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("project_domains")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function createProject(domain_id: string, title: string, description: string, status: string, progress: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("projects")
+    .insert([{ domain_id, title, description, status, progress, user_id: user.id }]);
+
+  if (error) throw error;
+}
+
+export async function editProject(id: string, domain_id: string, title: string, description: string, status: string, progress: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("projects")
+    .update({ domain_id, title, description, status, progress })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function deleteProject(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("projects")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}

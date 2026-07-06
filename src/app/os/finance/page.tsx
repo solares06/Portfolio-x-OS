@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, TrendingUp, TrendingDown, Wallet, Calendar as CalendarIcon, Tag, AlignLeft, DollarSign } from "lucide-react";
-import { getFinanceEntries, getMonthSummary, createFinanceEntry } from "@/lib/actions/finance";
+import { Plus, TrendingUp, TrendingDown, Wallet, Calendar as CalendarIcon, Tag, AlignLeft, DollarSign, Edit2, Trash2 } from "lucide-react";
+import { getFinanceEntries, getMonthSummary, createFinanceEntry, updateFinanceEntry, deleteFinanceEntry } from "@/lib/actions/finance";
+import FinanceModal, { FinanceEntryData } from "@/components/FinanceModal";
+import ConfirmModal from "@/components/ConfirmModal";
 
 type FinanceEntry = {
   id: string;
@@ -25,15 +27,11 @@ export default function OSFinancePage() {
   const [summary, setSummary] = useState<MonthSummary>({ income: 0, expense: 0, net: 0 });
   const [loading, setLoading] = useState(true);
   
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split("T")[0],
-    category: "",
-    amount: "",
-    type: "expense" as "income" | "expense",
-    notes: ""
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
+  const [editingEntry, setEditingEntry] = useState<FinanceEntryData | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
 
   async function loadData() {
     setLoading(true);
@@ -55,29 +53,56 @@ export default function OSFinancePage() {
     loadData();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.amount || !formData.category || !formData.date) return;
-    setSubmitting(true);
-    try {
+  const handleSaveEntry = async (data: Partial<FinanceEntryData>) => {
+    if (!data.amount || !data.category || !data.date || !data.type) return;
+    
+    if (modalMode === "create") {
       await createFinanceEntry({
-        ...formData,
-        amount: parseFloat(formData.amount)
+        date: data.date,
+        category: data.category,
+        amount: parseFloat(data.amount),
+        type: data.type,
+        notes: data.notes,
       });
-      setIsFormOpen(false);
-      setFormData({
-        date: new Date().toISOString().split("T")[0],
-        category: "",
-        amount: "",
-        type: "expense",
-        notes: ""
+    } else if (modalMode === "edit" && editingEntry) {
+      await updateFinanceEntry(editingEntry.id, {
+        date: data.date,
+        category: data.category,
+        amount: parseFloat(data.amount),
+        type: data.type,
+        notes: data.notes,
       });
-      await loadData();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSubmitting(false);
     }
+    await loadData();
+  };
+
+  const handleEditClick = (entry: FinanceEntry) => {
+    setEditingEntry({
+      ...entry,
+      amount: parseFloat(entry.amount).toString()
+    });
+    setModalMode("edit");
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setEntryToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!entryToDelete) return;
+    const id = entryToDelete;
+    // Optimistic update
+    setEntries(prev => prev.filter(e => e.id !== id));
+    try {
+      await deleteFinanceEntry(id);
+      await loadData(); // Reload to fix summary and actual data
+    } catch (e) {
+      console.error(e);
+      await loadData(); // Revert on failure
+    }
+    setEntryToDelete(null);
   };
 
   // Category breakdown logic
@@ -112,99 +137,38 @@ export default function OSFinancePage() {
             <p className="font-mono text-sm text-on-surface-variant mt-2 uppercase tracking-widest">Financial Telemetry & Ledger</p>
           </div>
           <button 
-            onClick={() => setIsFormOpen(!isFormOpen)}
+            onClick={() => {
+              setModalMode("create");
+              setEditingEntry(null);
+              setIsModalOpen(true);
+            }}
             className="flex items-center gap-2 bg-primary/10 border border-primary text-primary hover:bg-primary/20 px-4 py-2 rounded transition-colors font-mono uppercase text-sm"
           >
             <Plus className="w-4 h-4" />
-            {isFormOpen ? "Cancel Entry" : "Log Transaction"}
+            Log Transaction
           </button>
         </header>
 
         {/* Form Modal / Dropdown */}
-        {isFormOpen && (
-          <form onSubmit={handleSubmit} className="bg-surface-container-low border border-surface-variant rounded-lg p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 shadow-lg animate-in fade-in slide-in-from-top-4 duration-300">
-            <div className="space-y-1">
-              <label className="font-mono text-xs uppercase text-on-surface-variant tracking-wider">Date</label>
-              <div className="relative">
-                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
-                <input 
-                  type="date" 
-                  required
-                  value={formData.date}
-                  onChange={e => setFormData({...formData, date: e.target.value})}
-                  className="w-full bg-surface-container border border-outline-variant focus:border-primary-container focus:outline-none pl-10 pr-3 py-2 text-sm font-mono rounded text-on-surface"
-                />
-              </div>
-            </div>
+        <FinanceModal 
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveEntry}
+          initialData={editingEntry}
+          mode={modalMode}
+        />
 
-            <div className="space-y-1">
-              <label className="font-mono text-xs uppercase text-on-surface-variant tracking-wider">Type</label>
-              <select 
-                value={formData.type}
-                onChange={e => setFormData({...formData, type: e.target.value as "income" | "expense"})}
-                className="w-full bg-surface-container border border-outline-variant focus:border-primary-container focus:outline-none px-3 py-2 text-sm font-mono rounded text-on-surface"
-              >
-                <option value="expense">Expense</option>
-                <option value="income">Income</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-mono text-xs uppercase text-on-surface-variant tracking-wider">Category</label>
-              <div className="relative">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
-                <input 
-                  type="text" 
-                  required
-                  placeholder="e.g. Groceries"
-                  value={formData.category}
-                  onChange={e => setFormData({...formData, category: e.target.value})}
-                  className="w-full bg-surface-container border border-outline-variant focus:border-primary-container focus:outline-none pl-10 pr-3 py-2 text-sm font-mono rounded text-on-surface uppercase placeholder:normal-case"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-mono text-xs uppercase text-on-surface-variant tracking-wider">Amount</label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
-                <input 
-                  type="number" 
-                  step="0.01"
-                  required
-                  placeholder="0.00"
-                  value={formData.amount}
-                  onChange={e => setFormData({...formData, amount: e.target.value})}
-                  className="w-full bg-surface-container border border-outline-variant focus:border-primary-container focus:outline-none pl-10 pr-3 py-2 text-sm font-mono rounded text-on-surface"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-mono text-xs uppercase text-on-surface-variant tracking-wider">Notes (Optional)</label>
-              <div className="relative">
-                <AlignLeft className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
-                <input 
-                  type="text" 
-                  placeholder="Details..."
-                  value={formData.notes}
-                  onChange={e => setFormData({...formData, notes: e.target.value})}
-                  className="w-full bg-surface-container border border-outline-variant focus:border-primary-container focus:outline-none pl-10 pr-3 py-2 text-sm font-mono rounded text-on-surface"
-                />
-              </div>
-            </div>
-
-            <div className="md:col-span-2 lg:col-span-5 flex justify-end mt-2">
-              <button 
-                type="submit"
-                disabled={submitting}
-                className="bg-primary text-background px-6 py-2 rounded font-mono uppercase text-sm font-bold hover:bg-primary-container transition-colors disabled:opacity-50"
-              >
-                {submitting ? "Saving..." : "Commit Transaction"}
-              </button>
-            </div>
-          </form>
-        )}
+        <ConfirmModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setEntryToDelete(null);
+          }}
+          onConfirm={confirmDelete}
+          title="Delete Transaction"
+          message="Are you sure you want to delete this transaction? This action cannot be undone."
+          confirmText="Delete"
+        />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -264,8 +228,24 @@ export default function OSFinancePage() {
                             )}
                           </span>
                         </div>
-                        <div className={`font-mono font-bold text-lg ${isIncome ? 'text-primary' : 'text-error'}`}>
-                          {isIncome ? "+" : "-"}${parseFloat(entry.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <div className="flex items-center gap-4">
+                          <div className={`font-mono font-bold text-lg ${isIncome ? 'text-primary' : 'text-error'}`}>
+                            {isIncome ? "+" : "-"}${parseFloat(entry.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={() => handleEditClick(entry)}
+                              className="text-on-surface-variant hover:text-primary transition-colors p-1 rounded"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteClick(entry.id)}
+                              className="text-on-surface-variant hover:text-error transition-colors p-1 rounded"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

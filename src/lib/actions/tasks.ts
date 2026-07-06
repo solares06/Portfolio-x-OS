@@ -59,3 +59,33 @@ export async function createTask(title: string, dueDate: string | null = null) {
   if (error) throw error;
   revalidatePath("/os");
 }
+
+export async function editTask(id: string, title: string, dueDate: string | null = null) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("tasks")
+    .update({ title, due_date: dueDate })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+  revalidatePath("/os");
+}
+
+export async function deleteTask(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+  revalidatePath("/os");
+}

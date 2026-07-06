@@ -58,13 +58,13 @@ export function Hero() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/projects"
-                className="inline-flex items-center justify-center px-8 py-3.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
               >
                 View Projects
               </Link>
               <Link
                 href="/about"
-                className="inline-flex items-center justify-center px-8 py-3.5 bg-transparent border border-gray-300 text-foreground text-sm font-medium rounded-md hover:border-gray-500 transition-colors"
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-transparent border border-gray-300 text-foreground text-sm font-medium rounded-md hover:border-gray-500 hover:bg-black/5 transition-all duration-300 hover:shadow-sm hover:-translate-y-0.5"
               >
                 Read Philosophy
               </Link>
@@ -72,16 +72,16 @@ export function Hero() {
 
             {/* Social Row */}
             <div className="flex items-center gap-8 text-foreground/60">
-              <a href="#" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider hover:text-primary transition-colors group">
-                <LinkedinIcon className="w-4 h-4 group-hover:text-primary transition-colors" />
+              <a href="#" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider hover:text-primary transition-all duration-300 hover:-translate-y-0.5 group">
+                <LinkedinIcon className="w-4 h-4 group-hover:text-primary transition-colors duration-300" />
                 LinkedIn
               </a>
-              <a href="#" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider hover:text-primary transition-colors group">
-                <TwitterIcon className="w-4 h-4 group-hover:text-primary transition-colors" />
+              <a href="#" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider hover:text-primary transition-all duration-300 hover:-translate-y-0.5 group">
+                <TwitterIcon className="w-4 h-4 group-hover:text-primary transition-colors duration-300" />
                 Twitter
               </a>
-              <a href="#" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider hover:text-primary transition-colors group">
-                <InstagramIcon className="w-4 h-4 group-hover:text-primary transition-colors" />
+              <a href="#" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider hover:text-primary transition-all duration-300 hover:-translate-y-0.5 group">
+                <InstagramIcon className="w-4 h-4 group-hover:text-primary transition-colors duration-300" />
                 Instagram
               </a>
             </div>

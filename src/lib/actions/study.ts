@@ -4,6 +4,8 @@ import { createClient } from "../supabase/server";
 
 export async function getSemesterTracker() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
   const { data, error } = await supabase
     .from("study_classes")
     .select("*")
@@ -27,6 +29,8 @@ export async function getSemesterTracker() {
 
 export async function getWorkspaces() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
   
   // 1. Fetch workspaces
   const { data: workspacesData, error: wError } = await supabase
@@ -107,4 +111,94 @@ export async function getWorkspaces() {
       reply: m.reply
     })) : undefined
   }));
+}
+
+// -------------------------------------------------------------
+// CRUD Operations
+// -------------------------------------------------------------
+
+export async function createSemesterClass(
+  subject: string, instructor: string, next_due: string, 
+  next_due_label: string, status: string, notes: string, color: string
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_classes")
+    .insert([{ subject, instructor, next_due, next_due_label, status, notes, color, user_id: user.id }]);
+
+  if (error) throw error;
+}
+
+export async function editSemesterClass(
+  id: string, subject: string, instructor: string, next_due: string, 
+  next_due_label: string, status: string, notes: string, color: string
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_classes")
+    .update({ subject, instructor, next_due, next_due_label, status, notes, color })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function deleteSemesterClass(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_classes")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function createWorkspace(title: string, icon: string, progress?: number, leetcode_count?: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_workspaces")
+    .insert([{ title, icon, progress, leetcode_count, user_id: user.id }]);
+
+  if (error) throw error;
+}
+
+export async function editWorkspace(id: string, title: string, icon: string, progress?: number, leetcode_count?: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_workspaces")
+    .update({ title, icon, progress, leetcode_count })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function deleteWorkspace(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_workspaces")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
 }

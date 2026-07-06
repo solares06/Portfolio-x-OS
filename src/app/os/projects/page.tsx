@@ -11,12 +11,22 @@ import {
   Cpu,
   Microscope,
   ChevronDown,
-  ArrowRight
+  ArrowRight,
+  Plus,
+  Edit2,
+  Trash2
 } from "lucide-react";
-import { getProjectDomains } from "@/lib/actions/projects";
+import { 
+  getProjectDomains,
+  createDomain, editDomain, deleteDomain,
+  createProject, editProject, deleteProject
+} from "@/lib/actions/projects";
 import type { ProjectDomain, ProjectData } from "@/lib/mock-data";
+import DomainModal from "../components/DomainModal";
+import ProjectModal from "../components/ProjectModal";
+import ConfirmModal from "@/components/ConfirmModal";
 
-function ProjectCard({ project }: { project: ProjectData }) {
+function ProjectCard({ project, onEdit, onDelete }: { project: ProjectData, onEdit: (p: ProjectData) => void, onDelete: (id: string, title: string) => void }) {
   const getPhaseColors = (color: string) => {
     switch (color) {
       case 'primary': return 'border-primary-container/30 text-primary-container bg-primary-container/10';
@@ -65,15 +75,31 @@ function ProjectCard({ project }: { project: ProjectData }) {
             </div>
           ))}
         </div>
-        <button className="font-mono text-xs text-on-surface-variant hover:text-primary-container transition-colors flex items-center gap-1 uppercase tracking-widest">
-          Details <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={() => onEdit(project)} className="p-1 hover:bg-primary-container/20 text-on-surface-variant hover:text-primary-container rounded transition-colors"><Edit2 className="w-3 h-3" /></button>
+            <button onClick={() => onDelete(project.id, project.title)} className="p-1 hover:bg-error/20 text-on-surface-variant hover:text-error rounded transition-colors"><Trash2 className="w-3 h-3" /></button>
+          </div>
+          <button className="font-mono text-xs text-on-surface-variant hover:text-primary-container transition-colors flex items-center gap-1 uppercase tracking-widest ml-2">
+            Details <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function DomainSection({ domain, expanded, onToggle }: { domain: ProjectDomain, expanded: boolean, onToggle: () => void }) {
+function DomainSection({ 
+  domain, expanded, onToggle, 
+  onEdit, onDelete, onAddProject, 
+  onEditProject, onDeleteProject 
+}: { 
+  domain: ProjectDomain, expanded: boolean, onToggle: () => void,
+  onEdit: (d: ProjectDomain) => void, onDelete: (id: string, name: string) => void,
+  onAddProject: (domainId: string) => void,
+  onEditProject: (p: ProjectData, domainId: string) => void,
+  onDeleteProject: (id: string, title: string) => void
+}) {
   const IconMap: Record<string, React.ElementType> = {
     code: Code,
     brain: Brain,
@@ -126,7 +152,12 @@ function DomainSection({ domain, expanded, onToggle }: { domain: ProjectDomain, 
             <span className={`w-2 h-2 rounded-full ${healthDotColor}`}></span>
             <span className={`font-mono text-[11px] uppercase tracking-widest font-bold ${healthTextColor}`}>{domain.health}</span>
           </div>
-          <ChevronDown className={`w-6 h-6 text-on-surface-variant transition-transform duration-300 ${expanded ? 'rotate-180 text-primary-container' : ''}`} />
+          <div className="flex items-center space-x-2">
+            <button onClick={(e) => { e.stopPropagation(); onAddProject(domain.id); }} className="p-1 text-on-surface-variant hover:text-primary-container transition-colors"><Plus className="w-4 h-4" /></button>
+            <button onClick={(e) => { e.stopPropagation(); onEdit(domain); }} className="p-1 text-on-surface-variant hover:text-primary-container transition-colors"><Edit2 className="w-4 h-4" /></button>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(domain.id, domain.name); }} className="p-1 text-on-surface-variant hover:text-error transition-colors"><Trash2 className="w-4 h-4" /></button>
+            <ChevronDown className={`w-6 h-6 text-on-surface-variant transition-transform duration-300 ${expanded ? 'rotate-180 text-primary-container' : ''}`} />
+          </div>
         </div>
       </button>
 
@@ -140,7 +171,12 @@ function DomainSection({ domain, expanded, onToggle }: { domain: ProjectDomain, 
         <div className="p-6 space-y-4">
           {domain.projects.length > 0 ? (
             domain.projects.map(p => (
-              <ProjectCard key={p.id} project={p} />
+              <ProjectCard 
+                key={p.id} 
+                project={p} 
+                onEdit={(proj) => onEditProject(proj, domain.id)}
+                onDelete={onDeleteProject}
+              />
             ))
           ) : (
             <div className="p-4 rounded border border-outline-variant/50 bg-surface-container text-center text-outline font-mono text-xs py-10">
@@ -158,22 +194,77 @@ export default function OSProjectsPage() {
   const [expandedDomains, setExpandedDomains] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
-    async function load() {
-      try {
-        const data = await getProjectDomains();
-        setDomains(data);
-        setExpandedDomains(
-          data.reduce((acc: Record<string, boolean>, d: ProjectDomain) => ({ ...acc, [d.id]: !!d.defaultExpanded }), {})
-        );
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+  type ConfirmModalState = { isOpen: boolean; type: 'domain' | 'project'; id: string; title: string };
+
+  const [isDomainModalOpen, setIsDomainModalOpen] = useState(false);
+  const [editingDomain, setEditingDomain] = useState<ProjectDomain | null>(null);
+
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<{ project: ProjectData, domainId: string } | null>(null);
+  
+  const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({ isOpen: false, type: 'domain', id: '', title: '' });
+
+  const load = async () => {
+    try {
+      const data = await getProjectDomains();
+      setDomains(data);
+      setExpandedDomains(prev => 
+        Object.keys(prev).length > 0 
+          ? prev 
+          : data.reduce((acc: Record<string, boolean>, d: ProjectDomain) => ({ ...acc, [d.id]: !!d.defaultExpanded }), {})
+      );
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  React.useEffect(() => {
     load();
   }, []);
+
+  const handleSaveDomain = async (name: string, icon: string, status_label: string) => {
+    // Optimistic UI could be added here, but load() handles it fast enough
+    (async () => {
+      try {
+        if (editingDomain) await editDomain(editingDomain.id, name, icon, status_label);
+        else await createDomain(name, icon, status_label);
+      } finally { await load(); }
+    })();
+  };
+
+  const handleSaveProject = async (domain_id: string, title: string, description: string, status: string, progress: number) => {
+    (async () => {
+      try {
+        if (editingProject) await editProject(editingProject.project.id, domain_id, title, description, status, progress);
+        else await createProject(domain_id, title, description, status, progress);
+      } finally { await load(); }
+    })();
+  };
+
+  const handleDelete = async () => {
+    const { type, id } = confirmModal;
+    setConfirmModal({ ...confirmModal, isOpen: false });
+    
+    // Optimistic update
+    if (type === 'domain') {
+      setDomains(domains.filter(d => d.id !== id));
+    } else {
+      setDomains(domains.map(d => ({
+        ...d,
+        projects: d.projects.filter(p => p.id !== id)
+      })));
+    }
+
+    (async () => {
+      try {
+        if (type === 'domain') await deleteDomain(id);
+        else await deleteProject(id);
+      } finally { await load(); }
+    })();
+  };
+
 
   const toggleDomain = (id: string) => {
     setExpandedDomains(prev => ({
@@ -216,6 +307,12 @@ export default function OSProjectsPage() {
           <p className="font-body-lg text-on-surface-variant">Categorized operational tasks and developmental pipelines.</p>
         </div>
         <div className="hidden md:flex gap-2">
+          <button 
+            onClick={() => { setEditingDomain(null); setIsDomainModalOpen(true); }}
+            className="px-4 py-2 border border-outline-variant bg-surface-container-lowest rounded text-on-surface hover:text-primary-container hover:border-primary-container transition-all font-mono text-xs uppercase tracking-widest flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" /> Add Domain
+          </button>
           <button className="px-4 py-2 border border-outline-variant rounded text-on-surface-variant hover:text-primary hover:border-primary-container transition-all font-mono text-xs uppercase tracking-widest flex items-center gap-2">
             <Filter className="w-4 h-4" /> Filter
           </button>
@@ -230,12 +327,48 @@ export default function OSProjectsPage() {
             domain={domain} 
             expanded={expandedDomains[domain.id]} 
             onToggle={() => toggleDomain(domain.id)} 
+            onEdit={(d) => { setEditingDomain(d); setIsDomainModalOpen(true); }}
+            onDelete={(id, name) => setConfirmModal({ isOpen: true, type: 'domain', id, title: name })}
+            onAddProject={(dId) => { setEditingProject(null); setIsProjectModalOpen(true); }}
+            onEditProject={(proj, dId) => { setEditingProject({ project: proj, domainId: dId }); setIsProjectModalOpen(true); }}
+            onDeleteProject={(id, title) => setConfirmModal({ isOpen: true, type: 'project', id, title })}
           />
         ))}
       </div>
       
       {/* Bottom spacing */}
       <div className="h-24 md:h-8"></div>
+
+      <DomainModal
+        isOpen={isDomainModalOpen}
+        onClose={() => setIsDomainModalOpen(false)}
+        onSave={handleSaveDomain}
+        initialData={editingDomain ? { name: editingDomain.name, icon: editingDomain.icon, status_label: editingDomain.health } : undefined}
+      />
+
+      <ProjectModal
+        isOpen={isProjectModalOpen}
+        onClose={() => setIsProjectModalOpen(false)}
+        onSave={handleSaveProject}
+        domains={domains}
+        initialData={editingProject ? { 
+          domain_id: editingProject.domainId, 
+          title: editingProject.project.title, 
+          description: editingProject.project.description, 
+          status: editingProject.project.phaseTag.toLowerCase(), 
+          progress: editingProject.project.progress 
+        } : undefined}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={handleDelete}
+        title={`Delete ${confirmModal.type === 'domain' ? 'Domain' : 'Project'}`}
+        message={`Are you sure you want to delete "${confirmModal.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        isDestructive={true}
+      />
     </div>
   );
 }

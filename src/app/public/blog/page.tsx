@@ -24,7 +24,7 @@ export default function BlogPage() {
       {/* Featured Post */}
       {featured && (
         <Link href={`/blog/${featured.slug}`} className="block group">
-          <article className="grid grid-cols-1 md:grid-cols-2 bg-gray-800 rounded-theme overflow-hidden shadow-theme">
+          <article className="grid grid-cols-1 md:grid-cols-2 bg-gray-800 rounded-theme overflow-hidden shadow-theme transition-all duration-500 group-hover:shadow-xl group-hover:-translate-y-1">
             {/* Text side */}
             <div className="p-8 sm:p-12 flex flex-col justify-between text-white space-y-8">
               <div className="space-y-6">
@@ -61,7 +61,7 @@ export default function BlogPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {rest.map((post) => (
           <Link href={`/blog/${post.slug}`} key={post.slug} className="group">
-            <article className="bg-card rounded-theme shadow-theme border border-card-border overflow-hidden flex flex-col h-full">
+            <article className="bg-card rounded-theme shadow-theme border border-card-border overflow-hidden flex flex-col h-full transition-all duration-500 group-hover:shadow-lg group-hover:-translate-y-0.5">
               {/* Cover image */}
               <div className="relative aspect-[3/2] w-full overflow-hidden">
                 <Image

@@ -12,11 +12,17 @@ import {
   Circle,
   Filter,
 } from "lucide-react";
-import { getDashboardData } from "@/lib/actions/dashboard";
-import { toggleTaskStatus } from "@/lib/actions/tasks";
+import { getDashboardData, createEvent, editEvent, deleteEvent } from "@/lib/actions/dashboard";
+import { toggleTaskStatus, createTask, editTask, deleteTask } from "@/lib/actions/tasks";
+import { TaskModal } from "./components/TaskModal";
+import { EventModal } from "./components/EventModal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Edit2, Trash2 } from "lucide-react";
 
 type Task = { id: string; title: string; done: boolean; due_date: string | null };
 type Event = { id: string; title: string; date: string; time: string | null };
+
+type ConfirmModalState = { isOpen: boolean; type: 'task' | 'event'; id: string; title: string };
 
 export default function OSDashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -24,6 +30,31 @@ export default function OSDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   const now = new Date();
+
+  // Modals state
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({
+    isOpen: false,
+    type: 'task',
+    id: '',
+    title: ''
+  });
+
+  const refreshData = async () => {
+    try {
+      const data = await getDashboardData();
+      setTasks(data.tasks);
+      setEvents(data.events);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -39,6 +70,72 @@ export default function OSDashboardPage() {
     }
     loadData();
   }, []);
+
+  const handleSaveTask = async (title: string, dueDate: string | null) => {
+    // Optimistic UI
+    if (editingTask) {
+      setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, title, due_date: dueDate } : t));
+    } else {
+      setTasks([{ id: Math.random().toString(), title, done: false, due_date: dueDate }, ...tasks]);
+    }
+
+    (async () => {
+      try {
+        if (editingTask) {
+          await editTask(editingTask.id, title, dueDate);
+        } else {
+          await createTask(title, dueDate);
+        }
+      } finally {
+        await refreshData();
+      }
+    })();
+  };
+
+  const handleSaveEvent = async (title: string, date: string, time: string | null) => {
+    // Optimistic UI
+    if (editingEvent) {
+      setEvents(events.map(e => e.id === editingEvent.id ? { ...e, title, date, time } : e));
+    } else {
+      setEvents([...events, { id: Math.random().toString(), title, date, time }]);
+    }
+
+    (async () => {
+      try {
+        if (editingEvent) {
+          await editEvent(editingEvent.id, title, date, time);
+        } else {
+          await createEvent(title, date, time);
+        }
+      } finally {
+        await refreshData();
+      }
+    })();
+  };
+
+  const handleDelete = async () => {
+    const { type, id } = confirmModal;
+    setConfirmModal({ ...confirmModal, isOpen: false });
+
+    // Optimistic UI
+    if (type === 'task') {
+      setTasks(tasks.filter(t => t.id !== id));
+    } else {
+      setEvents(events.filter(e => e.id !== id));
+    }
+
+    (async () => {
+      try {
+        if (type === 'task') {
+          await deleteTask(id);
+        } else {
+          await deleteEvent(id);
+        }
+      } finally {
+        await refreshData();
+      }
+    })();
+  };
 
   const toggleTask = async (id: string, currentStatus: boolean) => {
     // Optimistic UI update
@@ -102,7 +199,10 @@ export default function OSDashboardPage() {
                 <div className="flex items-center space-x-2">
                   <button className="p-1 hover:text-primary transition-colors text-on-surface-variant"><ChevronLeft className="w-5 h-5" /></button>
                   <button className="p-1 hover:text-primary transition-colors text-on-surface-variant"><ChevronRight className="w-5 h-5" /></button>
-                  <button className="ml-2 flex items-center space-x-1 font-mono text-xs uppercase bg-surface-container border border-card-border px-3 py-1.5 rounded hover:border-primary-container hover:text-primary-container transition-colors">
+                  <button 
+                    onClick={() => { setEditingEvent(null); setSelectedDate(null); setIsEventModalOpen(true); }}
+                    className="ml-2 flex items-center space-x-1 font-mono text-xs uppercase bg-surface-container border border-card-border px-3 py-1.5 rounded hover:border-primary-container hover:text-primary-container transition-colors"
+                  >
                     <Plus className="w-3 h-3" />
                     <span>Add Event</span>
                   </button>
@@ -124,12 +224,25 @@ export default function OSDashboardPage() {
                   return (
                     <div 
                       key={day} 
-                      className={`min-h-[80px] p-2 border border-card-border rounded bg-surface-container-lowest transition-colors ${isToday ? 'border-primary-container neon-glow' : 'hover:border-outline-variant'}`}
+                      onClick={() => {
+                        setEditingEvent(null);
+                        setSelectedDate(dateStr);
+                        setIsEventModalOpen(true);
+                      }}
+                      className={`min-h-[80px] p-2 border border-card-border rounded bg-surface-container-lowest transition-colors cursor-pointer ${isToday ? 'border-primary-container neon-glow' : 'hover:border-outline-variant'}`}
                     >
                       <div className={`font-mono text-sm ${isToday ? 'text-primary-container' : 'text-on-surface-variant'}`}>{day}</div>
                       <div className="mt-2 space-y-1">
                         {dayEvents.map(e => (
-                          <div key={e.id} className="text-[10px] font-mono truncate px-1 rounded-sm bg-primary-container/20 text-primary-container">
+                          <div 
+                            key={e.id} 
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              setEditingEvent(e);
+                              setIsEventModalOpen(true);
+                            }}
+                            className="text-[10px] font-mono truncate px-1 rounded-sm bg-primary-container/20 text-primary-container cursor-pointer hover:bg-primary-container hover:text-on-primary-container transition-colors"
+                          >
                             {e.title}
                           </div>
                         ))}
@@ -149,10 +262,19 @@ export default function OSDashboardPage() {
                     {tasks.filter(t => !t.done).length} PENDING
                   </span>
                 </div>
-                <button className="flex items-center space-x-1 font-mono text-xs text-on-surface-variant hover:text-primary transition-colors">
-                  <Filter className="w-4 h-4" />
-                  <span>Filter</span>
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => { setEditingTask(null); setIsTaskModalOpen(true); }}
+                    className="flex items-center space-x-1 font-mono text-xs text-on-surface-variant hover:text-primary transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add</span>
+                  </button>
+                  <button className="flex items-center space-x-1 font-mono text-xs text-on-surface-variant hover:text-primary transition-colors">
+                    <Filter className="w-4 h-4" />
+                    <span>Filter</span>
+                  </button>
+                </div>
               </header>
               
               <div className="space-y-3">
@@ -163,10 +285,18 @@ export default function OSDashboardPage() {
                     <button onClick={() => toggleTask(task.id, task.done)} className="mt-1 flex-shrink-0 text-on-surface-variant hover:text-primary transition-colors">
                       {task.done ? <CheckCircle className="w-5 h-5 text-primary-container" /> : <Circle className="w-5 h-5" />}
                     </button>
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 space-y-2 group">
                       <div className="flex items-center justify-between">
                         <h3 className={`font-bold ${task.done ? 'line-through text-on-surface-variant' : 'text-foreground'}`}>{task.title}</h3>
                         <div className="flex items-center space-x-2">
+                          <div className="hidden group-hover:flex space-x-2 mr-2">
+                            <button onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); }} className="text-on-surface-variant hover:text-primary-container">
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => setConfirmModal({ isOpen: true, type: 'task', id: task.id, title: task.title })} className="text-on-surface-variant hover:text-error">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                           <span className="font-mono text-[10px] text-on-surface-variant">DUE: {task.due_date || 'N/A'}</span>
                         </div>
                       </div>
@@ -203,14 +333,22 @@ export default function OSDashboardPage() {
                         isPast ? 'border-primary-container bg-primary-container' : 'border-outline-variant shadow-[0_0_8px_rgba(0,242,255,0.8)]'
                       }`} />
                       
-                      <div className={`p-3 rounded border transition-all ${
+                      <div className={`p-3 rounded border transition-all group ${
                         !isPast ? 'bg-surface-container border-primary-container neon-glow' :
                         'bg-surface-container-lowest border-transparent'
                       }`}>
-                        <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center justify-between mb-1 group-hover:opacity-100">
                           <span className={`font-mono text-xs ${isPast ? 'text-on-surface-variant line-through' : 'text-primary-container'}`}>
                             {entry.time || 'All Day'}
                           </span>
+                          <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => { setEditingEvent(entry); setIsEventModalOpen(true); }} className="text-on-surface-variant hover:text-primary-container">
+                              <Edit2 className="w-3 h-3" />
+                            </button>
+                            <button onClick={() => setConfirmModal({ isOpen: true, type: 'event', id: entry.id, title: entry.title })} className="text-on-surface-variant hover:text-error">
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                         <h4 className={`font-bold text-sm ${isPast ? 'text-on-surface-variant line-through' : 'text-foreground'}`}>
                           {entry.title}
@@ -222,9 +360,33 @@ export default function OSDashboardPage() {
               </div>
             </section>
           </div>
-
         </div>
       )}
+
+      {/* Modals */}
+      <TaskModal 
+        isOpen={isTaskModalOpen} 
+        onClose={() => setIsTaskModalOpen(false)} 
+        onSave={handleSaveTask}
+        initialData={editingTask ? { title: editingTask.title, dueDate: editingTask.due_date } : undefined}
+      />
+
+      <EventModal
+        isOpen={isEventModalOpen}
+        onClose={() => setIsEventModalOpen(false)}
+        onSave={handleSaveEvent}
+        initialData={editingEvent ? { title: editingEvent.title, date: editingEvent.date, time: editingEvent.time } : selectedDate ? { title: "", date: selectedDate, time: null } : undefined}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={handleDelete}
+        title={`Delete ${confirmModal.type === 'task' ? 'Protocol' : 'Event'}`}
+        message={`Are you sure you want to delete "${confirmModal.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        isDestructive={true}
+      />
     </div>
   );
 }

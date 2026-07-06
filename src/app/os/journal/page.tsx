@@ -6,9 +6,11 @@ import {
   MoreVertical,
   Calendar,
   Plus,
+  Trash2,
 } from "lucide-react";
-import { getJournalEntries, saveJournalEntry, uploadJournalPhoto } from "@/lib/actions/journal";
+import { getJournalEntries, saveJournalEntry, uploadJournalPhoto, createBlankEntry, deleteJournalEntry } from "@/lib/actions/journal";
 import Image from "next/image";
+import ConfirmModal from "@/components/ConfirmModal";
 
 type JournalEntry = { id: string; title: string; body: string; date: string; created_at: string; mood?: string; photoUrls?: string[] };
 
@@ -20,6 +22,7 @@ export default function OSJournalPage() {
   const [saveStatus, setSaveStatus] = useState<"Saved" | "Saving..." | "Unsaved">("Saved");
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !activeEntryId) return;
@@ -90,20 +93,42 @@ export default function OSJournalPage() {
     }, 1000);
   };
 
-  const createNewEntry = () => {
-    const newEntry = {
-      id: "temp-" + Date.now(),
-      title: "",
-      body: "",
-      date: new Date().toISOString().split('T')[0],
-      created_at: new Date().toISOString(),
-    };
-    
-    setEntries([newEntry, ...entries]);
-    setActiveEntryId(newEntry.id);
-    
-    // We don't save immediately to DB until they type something
-    // Or we could trigger a save here if we wanted an empty row
+  const createNewEntry = async () => {
+    try {
+      setLoading(true);
+      const newId = await createBlankEntry();
+      const data = await getJournalEntries();
+      setEntries(data as JournalEntry[]);
+      setActiveEntryId(newId);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteEntryClick = () => {
+    if (!activeEntryId) return;
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteEntry = async () => {
+    if (!activeEntryId) return;
+    try {
+      setLoading(true);
+      await deleteJournalEntry(activeEntryId);
+      const data = await getJournalEntries();
+      setEntries(data as JournalEntry[]);
+      if (data.length > 0) {
+        setActiveEntryId(String(data[0].id));
+      } else {
+        setActiveEntryId(null);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -204,9 +229,18 @@ export default function OSJournalPage() {
                 {saveStatus}
               </span>
             </div>
-            <button className="text-on-surface-variant hover:text-primary transition-colors">
-              <MoreVertical className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleDeleteEntryClick}
+                className="text-on-surface-variant hover:text-error transition-colors p-2"
+                title="Delete Entry"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+              <button className="text-on-surface-variant hover:text-primary transition-colors p-2">
+                <MoreVertical className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="max-w-4xl w-full mx-auto px-10 pb-10 pt-4 flex flex-col flex-1">
@@ -278,6 +312,15 @@ export default function OSJournalPage() {
           Select or create an entry to start writing.
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDeleteEntry}
+        title="Delete Entry"
+        message="Are you sure you want to delete this journal entry? This action cannot be undone."
+        confirmText="Delete"
+      />
     </div>
   );
 }

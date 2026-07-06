@@ -5,6 +5,10 @@ import { revalidatePath } from "next/cache";
 
 export async function getFinanceEntries() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
   const { data, error } = await supabase
     .from("finance_entries")
     .select("*")
@@ -20,6 +24,10 @@ export async function getFinanceEntries() {
 
 export async function getMonthSummary() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { income: 0, expense: 0, net: 0 };
+
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
@@ -83,6 +91,58 @@ export async function createFinanceEntry(entry: {
 
   if (error) {
     console.error("Error creating finance entry:", error);
+    throw error;
+  }
+
+  revalidatePath("/os/finance");
+}
+
+export async function updateFinanceEntry(id: string, entry: {
+  date: string;
+  category: string;
+  amount: number;
+  type: "income" | "expense";
+  notes?: string;
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("finance_entries")
+    .update({
+      date: entry.date,
+      category: entry.category,
+      amount: entry.amount,
+      type: entry.type,
+      notes: entry.notes,
+    })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Error updating finance entry:", error);
+    throw error;
+  }
+
+  revalidatePath("/os/finance");
+}
+
+export async function deleteFinanceEntry(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("finance_entries")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Error deleting finance entry:", error);
     throw error;
   }
 

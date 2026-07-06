@@ -143,3 +143,101 @@ export async function getArchive(): Promise<ArchivePhoto[]> {
     label: String(a.title)
   }));
 }
+
+// -------------------------------------------------------------
+// CRUD Operations
+// -------------------------------------------------------------
+
+export async function createDirective(type: string, title: string, detail?: string, due_label?: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_directives")
+    .insert([{ type, title, detail, due_label, user_id: user.id }]);
+
+  if (error) throw error;
+}
+
+export async function editDirective(id: string, type: string, title: string, detail?: string, due_label?: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_directives")
+    .update({ type, title, detail, due_label })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function deleteDirective(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_directives")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function updateSponsorshipStats(target_amount: number, active_leads: number, conversion_rate: string, event_readiness: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  // Since it's a single row, we just update it where user_id matches
+  const { error } = await supabase
+    .from("ec_sponsorship_stats")
+    .update({ target_amount, active_leads, conversion_rate, event_readiness })
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function createTeamMember(name: string, role: string, avatar_url?: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_team_members")
+    .insert([{ name, role, avatar_url, user_id: user.id }]);
+
+  if (error) throw error;
+}
+
+export async function editTeamMember(id: string, name: string, role: string, avatar_url?: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_team_members")
+    .update({ name, role, avatar_url })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function deleteTeamMember(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_team_members")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}

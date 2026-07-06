@@ -31,7 +31,7 @@ export default function ProjectsPage() {
         >
           <article className="space-y-5">
             {/* Cover */}
-            <div className="relative w-full aspect-[2/1] rounded-theme overflow-hidden shadow-theme bg-gray-100">
+            <div className="relative w-full aspect-[2/1] rounded-theme overflow-hidden shadow-theme bg-gray-100 transition-all duration-500 group-hover:shadow-lg group-hover:-translate-y-0.5">
               <Image
                 src={featured.meta.coverImage}
                 alt={featured.meta.title}
@@ -85,7 +85,7 @@ export default function ProjectsPage() {
             >
               <article className="space-y-4">
                 {/* Cover */}
-                <div className="relative w-full aspect-[6/5] rounded-theme overflow-hidden shadow-theme bg-gray-100 border border-card-border">
+                <div className="relative w-full aspect-[6/5] rounded-theme overflow-hidden shadow-theme bg-gray-100 border border-card-border transition-all duration-500 group-hover:shadow-lg group-hover:-translate-y-0.5">
                   <Image
                     src={project.meta.coverImage}
                     alt={project.meta.title}
