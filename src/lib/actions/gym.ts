@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "../supabase/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function getBodyMetrics() {
   const supabase = await createClient();
@@ -104,7 +105,8 @@ export async function getWorkoutDay(dayId?: string) {
       label: s.label,
       details: s.details,
       isActive: s.is_active,
-      isFaded: s.is_faded
+      isFaded: s.is_faded,
+      logs: s.logs || []
     }))
   }));
 
@@ -185,14 +187,28 @@ export async function createWorkoutDay(day_id: string, title: string) {
   if (error) throw error;
 }
 
-export async function createExercise(workout_day_id: string, order_index: string, name: string, target: string, is_faded: boolean = false) {
+export async function createExercise(workout_day_id: string, order_index: string, name: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
+  let classifiedTarget = "Core";
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const prompt = `Classify the gym exercise "${name}" into exactly one of these muscle groups: Chest, Back, Shoulders, Biceps, Triceps, Forearms, Quads, Hamstrings, Calves, Core. Respond with ONLY the single muscle group name.`;
+      const result = await model.generateContent(prompt);
+      const aiResponse = result.response.text().trim();
+      if (aiResponse) classifiedTarget = aiResponse;
+    } catch (e) {
+      console.error("AI classification failed", e);
+    }
+  }
+
   const { error } = await supabase
     .from("gym_exercises")
-    .insert([{ workout_day_id, order_index, name, target, is_faded, user_id: user.id }]);
+    .insert([{ workout_day_id, order_index, name, target: classifiedTarget, is_faded: false, user_id: user.id }]);
 
   if (error) throw error;
 }
@@ -251,6 +267,93 @@ export async function editSet(id: string, label: string, details: string, is_act
   if (error) throw error;
 }
 
+export async function updateSetLogs(id: string, logs: { id: number; kg: string; reps: string; rpe: string; completed: boolean }[]) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("gym_sets")
+    .update({ logs })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function getMuscleDistribution() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  // Fetch all exercises for the user and their sets
+  const { data: exercises, error } = await supabase
+    .from("gym_exercises")
+    .select(`
+      id,
+      name,
+      target,
+      gym_sets (id, logs)
+    `)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+
+  const distribution = {
+    Chest: 0,
+    Back: 0,
+    Shoulders: 0,
+    Biceps: 0,
+    Triceps: 0,
+    Forearms: 0,
+    Quads: 0,
+    Hamstrings: 0,
+    Calves: 0,
+    Core: 0
+  };
+
+  if (exercises) {
+    for (const ex of exercises) {
+      // Map targets to categories
+      let category = "Core"; // Default fallback
+      const targetStr = (ex.target || "").toLowerCase();
+      
+      if (targetStr.includes("chest") || targetStr.includes("pec")) category = "Chest";
+      else if (targetStr.includes("back") || targetStr.includes("lat")) category = "Back";
+      else if (targetStr.includes("shoulder") || targetStr.includes("delt")) category = "Shoulders";
+      else if (targetStr.includes("bicep") || targetStr.includes("curl")) category = "Biceps";
+      else if (targetStr.includes("tricep") || targetStr.includes("extension")) category = "Triceps";
+      else if (targetStr.includes("forearm") || targetStr.includes("wrist")) category = "Forearms";
+      else if (targetStr.includes("quad") || targetStr.includes("leg press") || targetStr.includes("squat") || targetStr.includes("lunge")) category = "Quads";
+      else if (targetStr.includes("hamstring") || targetStr.includes("leg curl")) category = "Hamstrings";
+      else if (targetStr.includes("calf") || targetStr.includes("calves")) category = "Calves";
+      else if (targetStr.includes("core") || targetStr.includes("abs") || targetStr.includes("abdominal")) category = "Core";
+      
+      // Calculate total sets for this exercise
+      let numSets = 0;
+      if (ex.gym_sets && ex.gym_sets.length > 0) {
+        const logs = ex.gym_sets[0].logs;
+        numSets = (logs && Array.isArray(logs) && logs.length > 0) ? logs.length : 3;
+      }
+      
+      if (distribution[category as keyof typeof distribution] !== undefined) {
+        distribution[category as keyof typeof distribution] += numSets;
+      }
+    }
+  }
+
+  // Format as array for the UI
+  return Object.entries(distribution).map(([name, sets]) => ({
+    name,
+    sets,
+    max: 20, // Arbitrary max for the bar chart scaling
+    color: name === 'Chest' ? 'bg-primary-container' : 
+           name === 'Back' ? 'bg-secondary-container' : 
+           name === 'Legs' ? 'bg-[#ffb4ab]' : 
+           name === 'Arms' ? 'bg-[#fed83a]' : 'bg-outline'
+  }));
+}
+
 export async function deleteSet(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -279,12 +382,12 @@ export async function initializeGymProfile() {
 
   // 2. Create weekly splits
   const days = [
-    { day_label: "MON", type: "Rest", is_active: false, order_index: 1 },
-    { day_label: "TUE", type: "Rest", is_active: false, order_index: 2 },
-    { day_label: "WED", type: "Rest", is_active: false, order_index: 3 },
+    { day_label: "MON", type: "Push A", is_active: true, order_index: 1 },
+    { day_label: "TUE", type: "Pull A", is_active: false, order_index: 2 },
+    { day_label: "WED", type: "Legs + Abs", is_active: false, order_index: 3 },
     { day_label: "THU", type: "Rest", is_active: false, order_index: 4 },
-    { day_label: "FRI", type: "Rest", is_active: false, order_index: 5 },
-    { day_label: "SAT", type: "Rest", is_active: false, order_index: 6 },
+    { day_label: "FRI", type: "Push B", is_active: false, order_index: 5 },
+    { day_label: "SAT", type: "Pull B", is_active: false, order_index: 6 },
     { day_label: "SUN", type: "Rest", is_active: false, order_index: 7 }
   ].map(d => ({ ...d, user_id: user.id }));
   await supabase.from("gym_weekly_splits").insert(days);
@@ -297,4 +400,54 @@ export async function initializeGymProfile() {
     duration: "60 MIN",
     intensity: "Medium"
   }]);
+}
+
+export async function getConsistencyData() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  
+  const { data, error } = await supabase
+    .from("gym_consistency_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("date", { ascending: true });
+    
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return data;
+}
+
+export async function toggleConsistencyDay(dateStr: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  
+  // Check if it exists
+  const { data: existing } = await supabase
+    .from("gym_consistency_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("date", dateStr)
+    .single();
+    
+  if (existing) {
+    // Toggle completed status
+    await supabase
+      .from("gym_consistency_logs")
+      .update({ completed: !existing.completed })
+      .eq("id", existing.id);
+  } else {
+    // Insert new
+    await supabase
+      .from("gym_consistency_logs")
+      .insert([{
+        user_id: user.id,
+        date: dateStr,
+        completed: true,
+        cycle_id: 1 // Default to 1 for now
+      }]);
+  }
 }

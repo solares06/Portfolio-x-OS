@@ -3,20 +3,15 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
-  Bell,
-  Clock,
   Play,
   Upload,
   Image as ImageIcon,
   Plus,
-  Droplet,
-  Footprints,
-  Flame,
-  CheckCircle2,
-  Circle
 } from "lucide-react";
-import { getWeeklySplit, getBodyMetrics, getWorkoutDay, initializeGymProfile, createExercise, updateWeeklySplitType, createWorkoutDay } from "@/lib/actions/gym";
+import { getWeeklySplit, getBodyMetrics, getWorkoutDay, initializeGymProfile, createExercise, updateWeeklySplitType, createWorkoutDay, getMuscleDistribution } from "@/lib/actions/gym";
 import { WeeklySplitDay, BodyMetrics, WorkoutDay } from "@/lib/mock-data";
+import ExerciseSets from "@/components/gym/ExerciseSets";
+import ConsistencyTracker from "@/components/gym/ConsistencyTracker";
 
 export default function OSGymPage() {
   const [weeklySplit, setWeeklySplit] = useState<WeeklySplitDay[]>([]);
@@ -25,10 +20,10 @@ export default function OSGymPage() {
   const [activeSplitDay, setActiveSplitDay] = useState<WeeklySplitDay | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // New UI states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newExercise, setNewExercise] = useState({ name: "", setsReps: "", intensity: "Moderate" });
-  const [hydration, setHydration] = useState(3); // 3 of 8 glasses
+  
+  const [muscleDistribution, setMuscleDistribution] = useState<{ name: string; sets: number; max: number; color: string }[]>([]);
   
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [isCalcOpen, setIsCalcOpen] = useState(false);
@@ -54,12 +49,14 @@ export default function OSGymPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [split, m] = await Promise.all([
+        const [split, m, distribution] = await Promise.all([
           getWeeklySplit(),
-          getBodyMetrics()
+          getBodyMetrics(),
+          getMuscleDistribution()
         ]);
         setWeeklySplit(split);
         setMetrics(m);
+        setMuscleDistribution(distribution);
         
         if (split.length > 0) {
           const currentDayStr = new Date().toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
@@ -84,14 +81,16 @@ export default function OSGymPage() {
       setLoading(true);
       await initializeGymProfile();
       
-      const [split, m, day] = await Promise.all([
+      const [split, m, day, distribution] = await Promise.all([
         getWeeklySplit(),
         getBodyMetrics(),
-        getWorkoutDay()
+        getWorkoutDay(),
+        getMuscleDistribution()
       ]);
       setWeeklySplit(split);
       setMetrics(m);
       setWorkoutDay(day);
+      setMuscleDistribution(distribution);
     } catch (err) {
       console.error(err);
       alert("Please make sure you are logged in and migrations are applied.");
@@ -139,11 +138,15 @@ export default function OSGymPage() {
       // Mock order index calculation
       const nextOrder = (workoutDay.exercises.length + 1).toString().padStart(2, '0');
       // Create exercise
-      await createExercise(workoutDay.id, nextOrder, newExercise.name, newExercise.setsReps); // Using target to store setsReps for now
+      await createExercise(workoutDay.id, nextOrder, newExercise.name);
       
-      // Refresh day
-      const day = await getWorkoutDay();
+      // Refresh day and distribution
+      const [day, distribution] = await Promise.all([
+        getWorkoutDay(),
+        getMuscleDistribution()
+      ]);
       setWorkoutDay(day);
+      setMuscleDistribution(distribution);
       
       setIsAddModalOpen(false);
       setNewExercise({ name: "", setsReps: "", intensity: "Moderate" });
@@ -178,10 +181,6 @@ export default function OSGymPage() {
       </div>
     );
   }
-
-  // Map database days to the simple 7 day letters (S M T W T F S)
-  const dayInitials = ["S", "M", "T", "W", "T", "F", "S"];
-  const dayLabels = ["Legs", "Rest", "Push", "Pull", "Push", "Legs", "Pull"]; // Mocking the types like the screenshot
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-8 z-10 space-y-6 h-full custom-scrollbar relative bg-background">
@@ -318,56 +317,7 @@ export default function OSGymPage() {
 
                     {/* Advanced Sets View */}
                     {expandedExercise === ex.id && (
-                      <div className="bg-surface-container/30 p-4 border-t border-card-border/50 space-y-2">
-                        {/* Headers */}
-                        <div className="grid grid-cols-12 gap-2 text-[10px] uppercase font-mono tracking-widest text-outline px-2 mb-2 text-center">
-                          <div className="col-span-1">Set</div>
-                          <div className="col-span-3 text-left">Previous</div>
-                          <div className="col-span-2">kg</div>
-                          <div className="col-span-2">Reps</div>
-                          <div className="col-span-2">RPE</div>
-                          <div className="col-span-2">✓</div>
-                        </div>
-
-                        {/* Sets Rows */}
-                        {[1, 2, 3].map((setIndex) => (
-                          <div key={setIndex} className={`grid grid-cols-12 gap-2 items-center px-2 py-1.5 rounded-lg ${setIndex === 2 ? 'bg-primary-container/5' : ''}`}>
-                            <div className="col-span-1 text-center">
-                              <span className={`w-5 h-5 inline-flex items-center justify-center rounded text-xs font-mono font-bold ${setIndex === 1 ? 'bg-secondary-container/20 text-secondary-container' : 'bg-surface-container-high text-on-surface-variant'}`}>
-                                {setIndex === 1 ? 'W' : setIndex}
-                              </span>
-                            </div>
-                            <div className="col-span-3 text-left text-[11px] text-outline font-mono">
-                              60kg x 10
-                            </div>
-                            <div className="col-span-2">
-                              <input type="text" className="w-full bg-surface-container border border-outline-variant/30 rounded text-center text-sm py-1 focus:border-primary-container outline-none" defaultValue={setIndex === 1 ? "40" : "60"} />
-                            </div>
-                            <div className="col-span-2">
-                              <input type="text" className="w-full bg-surface-container border border-outline-variant/30 rounded text-center text-sm py-1 focus:border-primary-container outline-none" defaultValue={setIndex === 1 ? "15" : "10"} />
-                            </div>
-                            <div className="col-span-2">
-                              <input type="text" className="w-full bg-surface-container border border-outline-variant/30 rounded text-center text-sm py-1 focus:border-primary-container outline-none" defaultValue={setIndex === 1 ? "-" : "8"} />
-                            </div>
-                            <div className="col-span-2 text-center flex justify-center">
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                }}
-                                className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${setIndex === 2 ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container-high text-outline hover:text-primary-container'}`}
-                              >
-                                ✓
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                        
-                        <div className="pt-2 text-center">
-                          <button className="text-[10px] uppercase font-mono tracking-widest text-outline hover:text-primary-container transition-colors">
-                            + Add Set
-                          </button>
-                        </div>
-                      </div>
+                      <ExerciseSets exerciseSet={ex.sets?.[0] || { id: ex.id, details: ex.target }} />
                     )}
                   </div>
                 )))}
@@ -400,135 +350,24 @@ export default function OSGymPage() {
           {/* RIGHT COLUMN: Telemetry (Macros, Hydration, Steps, Intention, Muscle Distribution) */}
           <div className="lg:col-span-4 space-y-6">
             
+            {/* Consistency Tracker */}
+            <ConsistencyTracker />
+
             {/* Muscle Distribution Chart */}
             <div className="glass-panel p-6 rounded-xl border border-card-border">
               <h3 className="font-display text-lg font-bold text-on-surface mb-4">Muscle Distribution <span className="text-[10px] uppercase font-mono text-outline font-normal ml-2">This Week</span></h3>
               <div className="space-y-3">
-                {[
-                  { name: "Chest", sets: 14, max: 20, color: "bg-primary-container" },
-                  { name: "Back", sets: 16, max: 20, color: "bg-secondary-container" },
-                  { name: "Legs", sets: 12, max: 20, color: "bg-[#ffb4ab]" },
-                  { name: "Arms", sets: 8, max: 20, color: "bg-[#fed83a]" },
-                  { name: "Core", sets: 4, max: 20, color: "bg-outline" },
-                ].map((muscle) => (
+                {muscleDistribution.map((muscle) => (
                   <div key={muscle.name}>
                     <div className="flex justify-between text-xs font-mono uppercase tracking-wide mb-1">
                       <span className="text-on-surface-variant">{muscle.name}</span>
                       <span className="text-outline">{muscle.sets} sets</span>
                     </div>
                     <div className="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
-                      <div className={`h-full ${muscle.color}`} style={{ width: `${(muscle.sets / muscle.max) * 100}%` }}></div>
+                      <div className={`h-full ${muscle.color}`} style={{ width: `${Math.min(100, (muscle.sets / muscle.max) * 100)}%` }}></div>
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-            
-            {/* Macros Card */}
-            <div className="glass-panel p-6 rounded-xl border border-card-border flex flex-col items-center">
-              <div className="w-40 h-40 relative flex items-center justify-center mb-8">
-                {/* SVG Circle Progress */}
-                <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-                  <circle cx="80" cy="80" r="70" className="stroke-surface-container-high" strokeWidth="8" fill="none" />
-                  <circle cx="80" cy="80" r="70" className="stroke-primary-container" strokeWidth="8" fill="none" strokeDasharray="440" strokeDashoffset="440" />
-                </svg>
-                <div className="text-center relative z-10">
-                  <div className="font-display text-3xl font-bold text-on-surface">0</div>
-                  <div className="font-mono text-[9px] text-on-surface-variant uppercase tracking-widest">kcal eaten</div>
-                  <div className="font-mono text-[10px] text-outline mt-1">/ 1,985</div>
-                </div>
-              </div>
-
-              <div className="w-full space-y-4">
-                <div>
-                  <div className="flex justify-between font-mono text-[10px] uppercase tracking-widest mb-1.5">
-                    <span className="text-on-surface">Protein</span>
-                    <span className="text-outline">0g / 130g</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
-                    <div className="h-full bg-primary-container w-0"></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between font-mono text-[10px] uppercase tracking-widest mb-1.5">
-                    <span className="text-on-surface">Carbs</span>
-                    <span className="text-outline">0g / 220g</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
-                    <div className="h-full bg-primary-container w-0"></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between font-mono text-[10px] uppercase tracking-widest mb-1.5">
-                    <span className="text-on-surface">Fats</span>
-                    <span className="text-outline">0g / 65g</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
-                    <div className="h-full bg-primary-container w-0"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Body Metrics Addition (Height & Weight as requested) */}
-            <div className="glass-panel p-6 rounded-xl border border-card-border">
-               <h3 className="font-display text-lg font-bold text-on-surface mb-4">Body Metrics</h3>
-               <div className="grid grid-cols-2 gap-4">
-                 <div className="bg-surface-container-low p-4 rounded-lg">
-                   <div className="font-mono text-[9px] uppercase tracking-widest text-outline mb-1">Weight</div>
-                   <div className="font-body text-xl font-bold text-primary-container">{metrics.weight.value} <span className="text-sm text-on-surface-variant">kg</span></div>
-                 </div>
-                 <div className="bg-surface-container-low p-4 rounded-lg">
-                   <div className="font-mono text-[9px] uppercase tracking-widest text-outline mb-1">Height</div>
-                   <div className="font-body text-xl font-bold text-primary-container">175 <span className="text-sm text-on-surface-variant">cm</span></div>
-                 </div>
-               </div>
-            </div>
-
-            {/* Hydration */}
-            <div className="glass-panel p-6 rounded-xl border border-card-border text-center">
-              <Droplet className="w-6 h-6 text-primary-container mx-auto mb-2" />
-              <h3 className="font-body text-lg font-bold text-on-surface">Hydration</h3>
-              <p className="font-mono text-xs text-on-surface-variant mb-4">{hydration} of 8 glasses</p>
-              
-              <div className="flex justify-center gap-1.5">
-                {[...Array(8)].map((_, i) => (
-                  <div 
-                    key={i}
-                    onClick={() => setHydration(i + 1)}
-                    className="cursor-pointer transition-transform hover:scale-110"
-                  >
-                    <Droplet className={`w-6 h-6 ${i < hydration ? 'fill-primary-container text-primary-container' : 'text-outline-variant'}`} />
-                  </div>
-                ))}
-              </div>
-              <p className="font-mono text-[9px] uppercase text-outline tracking-widest mt-4">Click to fill or unfill</p>
-            </div>
-
-            {/* Steps */}
-            <div className="glass-panel p-6 rounded-xl border border-card-border flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full border border-primary-container flex items-center justify-center text-primary-container">
-                  <Footprints className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="font-body font-bold text-on-surface">8,500 <span className="font-normal text-on-surface-variant text-sm">steps today</span></div>
-                  <div className="font-mono text-[10px] text-outline mt-1">Goal: 10,000 · 5:24 Sync</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Daily Intention */}
-            <div className="glass-panel p-6 rounded-xl border border-card-border relative">
-              <span className="absolute top-4 right-4 text-4xl text-outline-variant/30 font-serif leading-none">"</span>
-              <p className="font-serif text-lg italic text-on-surface/90 pr-8 leading-relaxed">
-                "Your body is a garden, your will is the gardener. Nourish it softly, grow it strongly."
-              </p>
-              <div className="mt-6 flex justify-between items-center">
-                <span className="font-mono text-[9px] uppercase tracking-widest text-outline">Daily Intention</span>
-                <button className="w-6 h-6 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center hover:bg-surface-variant transition-colors">
-                  <span className="text-primary-container leading-none text-xl mb-1">*</span>
-                </button>
               </div>
             </div>
 

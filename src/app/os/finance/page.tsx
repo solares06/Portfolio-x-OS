@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, TrendingUp, TrendingDown, Wallet, Calendar as CalendarIcon, Tag, AlignLeft, DollarSign, Edit2, Trash2 } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Wallet, Edit2, Trash2 } from "lucide-react";
 import { getFinanceEntries, getMonthSummary, createFinanceEntry, updateFinanceEntry, deleteFinanceEntry } from "@/lib/actions/finance";
 import FinanceModal, { FinanceEntryData } from "@/components/FinanceModal";
 import ConfirmModal from "@/components/ConfirmModal";

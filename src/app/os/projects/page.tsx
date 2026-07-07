@@ -329,7 +329,7 @@ export default function OSProjectsPage() {
             onToggle={() => toggleDomain(domain.id)} 
             onEdit={(d) => { setEditingDomain(d); setIsDomainModalOpen(true); }}
             onDelete={(id, name) => setConfirmModal({ isOpen: true, type: 'domain', id, title: name })}
-            onAddProject={(dId) => { setEditingProject(null); setIsProjectModalOpen(true); }}
+            onAddProject={() => { setEditingProject(null); setIsProjectModalOpen(true); }}
             onEditProject={(proj, dId) => { setEditingProject({ project: proj, domainId: dId }); setIsProjectModalOpen(true); }}
             onDeleteProject={(id, title) => setConfirmModal({ isOpen: true, type: 'project', id, title })}
           />

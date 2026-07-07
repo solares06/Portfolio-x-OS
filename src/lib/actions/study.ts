@@ -202,3 +202,182 @@ export async function deleteWorkspace(id: string) {
 
   if (error) throw error;
 }
+
+// --- STUDY NEXUS (ML, DSA, WEB DEV) ---
+
+interface StudySubtopicRow {
+  id: string;
+  title: string;
+  is_completed: boolean;
+  topic_id: string;
+  created_at: string;
+}
+
+interface StudyTopicRow {
+  id: string;
+  title: string;
+  source_url: string;
+  source_name: string;
+  notes: string;
+  subtopics?: StudySubtopicRow[];
+}
+
+interface StudyProjectRow {
+  id: string;
+  title: string;
+  description: string;
+  notes: string;
+  status: string;
+  github_url?: string;
+}
+
+export async function getStudyDomainData(domain: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { topics: [], projects: [] };
+
+  const { data: topicsData, error: topicsError } = await supabase
+    .from("study_topics")
+    .select("*, subtopics:study_subtopics(*)")
+    .eq("user_id", user.id)
+    .eq("domain", domain)
+    .order("created_at", { ascending: true });
+
+  const { data: projectsData, error: projectsError } = await supabase
+    .from("study_projects")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("domain", domain)
+    .order("created_at", { ascending: true });
+
+  if (topicsError || projectsError) {
+    console.error(topicsError, projectsError);
+  }
+
+  const topics = (topicsData as StudyTopicRow[] | null || []).map((t) => ({
+    ...t,
+    subtopics: (t.subtopics || []).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  }));
+
+  return { topics, projects: (projectsData as StudyProjectRow[] | null) || [] };
+}
+
+export async function createStudyTopic(domain: string, title: string, sourceName?: string, sourceUrl?: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("study_topics")
+    .insert([{ user_id: user.id, domain, title, source_name: sourceName, source_url: sourceUrl }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateStudyTopic(id: string, updates: { title?: string, source_name?: string, source_url?: string, notes?: string }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_topics")
+    .update(updates)
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function deleteStudyTopic(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_topics")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function createStudySubtopic(topicId: string, title: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("study_subtopics")
+    .insert([{ topic_id: topicId, title }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function toggleStudySubtopic(id: string, isCompleted: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_subtopics")
+    .update({ is_completed: isCompleted })
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+export async function deleteStudySubtopic(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("study_subtopics").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function createStudyProject(domain: string, title: string, description: string, status: string, githubUrl?: string, notes?: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("study_projects")
+    .insert([{ user_id: user.id, domain, title, description, status, github_url: githubUrl, notes: notes || '' }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateStudyProject(id: string, updates: { title?: string, description?: string, status?: string, github_url?: string, notes?: string }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_projects")
+    .update(updates)
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function deleteStudyProject(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_projects")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}

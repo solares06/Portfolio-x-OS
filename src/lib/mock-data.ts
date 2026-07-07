@@ -163,6 +163,7 @@ export interface Exercise {
 }
 
 export interface WorkoutDay {
+  id: string;
   dayId: string;
   title: string;
   duration: string;

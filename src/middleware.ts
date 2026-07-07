@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
   const isOSSubdomain = host.startsWith("os.");
 
   // Keep these paths at the root, don't rewrite them
-  const rootPaths = ["/login", "/auth/callback"];
+  const rootPaths = ["/login", "/auth/callback", "/api"];
   const isRootPath = rootPaths.some((p) => pathname.startsWith(p));
 
   // Determine the base response (rewrite or pass-through)
