@@ -56,7 +56,7 @@ export async function createBlankEntry() {
   return data.id;
 }
 
-export async function saveJournalEntry(id: string | null, entry: { title: string; body: string; date: string }) {
+export async function saveJournalEntry(id: string | null, entry: { title: string; body: string; date: string; mood?: string | null }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -71,6 +71,7 @@ export async function saveJournalEntry(id: string | null, entry: { title: string
         title: entry.title,
         body: entry.body,
         date: entry.date,
+        mood: entry.mood ?? null,
       })
       .eq("id", id)
       .eq("user_id", user.id);

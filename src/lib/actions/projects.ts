@@ -62,7 +62,7 @@ export async function getProjectDomains(): Promise<ProjectDomain[]> {
         title: String(p.title),
         phaseTag,
         phaseColor: phaseColor as 'primary' | 'secondary' | 'error' | 'tertiary' | 'outline',
-        progress: 50,
+        progress: typeof p.progress === "number" ? p.progress : p.status === "done" ? 100 : p.status === "blocked" ? 25 : 50,
         description: p.description ? String(p.description) : "",
         contributors: [{ initials: "ME" }]
       };

@@ -7,11 +7,14 @@ import {
   Upload,
   Image as ImageIcon,
   Plus,
+  Calculator,
+  Scale,
 } from "lucide-react";
-import { getWeeklySplit, getBodyMetrics, getWorkoutDay, initializeGymProfile, createExercise, updateWeeklySplitType, createWorkoutDay, getMuscleDistribution } from "@/lib/actions/gym";
+import { getWeeklySplit, getBodyMetrics, getWorkoutDay, initializeGymProfile, createExercise, updateWeeklySplitType, createWorkoutDay, getMuscleDistribution, updateBodyMetrics } from "@/lib/actions/gym";
 import { WeeklySplitDay, BodyMetrics, WorkoutDay } from "@/lib/mock-data";
 import ExerciseSets from "@/components/gym/ExerciseSets";
 import ConsistencyTracker from "@/components/gym/ConsistencyTracker";
+import BodyMetricsModal from "../components/BodyMetricsModal";
 
 export default function OSGymPage() {
   const [weeklySplit, setWeeklySplit] = useState<WeeklySplitDay[]>([]);
@@ -27,6 +30,7 @@ export default function OSGymPage() {
   
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [isCalcOpen, setIsCalcOpen] = useState(false);
+  const [isMetricsOpen, setIsMetricsOpen] = useState(false);
   const [targetWeight, setTargetWeight] = useState(100);
   const [barWeight, setBarWeight] = useState(20);
 
@@ -135,19 +139,16 @@ export default function OSGymPage() {
   const handleAddExercise = async () => {
     if (!workoutDay || !newExercise.name) return;
     try {
-      // Mock order index calculation
       const nextOrder = (workoutDay.exercises.length + 1).toString().padStart(2, '0');
-      // Create exercise
       await createExercise(workoutDay.id, nextOrder, newExercise.name);
-      
-      // Refresh day and distribution
+
       const [day, distribution] = await Promise.all([
-        getWorkoutDay(),
+        getWorkoutDay(activeSplitDay?.dayLabel),
         getMuscleDistribution()
       ]);
       setWorkoutDay(day);
       setMuscleDistribution(distribution);
-      
+
       setIsAddModalOpen(false);
       setNewExercise({ name: "", setsReps: "", intensity: "Moderate" });
     } catch (error) {
@@ -156,8 +157,20 @@ export default function OSGymPage() {
     }
   };
 
+  const handleSaveMetrics = async (
+    weight_value: number, weight_unit: string, weight_delta: string,
+    body_fat_value: number, body_fat_unit: string, body_fat_delta: string, body_fat_progress: number
+  ) => {
+    await updateBodyMetrics(
+      weight_value, weight_unit, weight_delta,
+      body_fat_value, body_fat_unit, body_fat_delta, body_fat_progress
+    );
+    const m = await getBodyMetrics();
+    setMetrics(m);
+  };
+
   if (loading) return <div className="p-8 font-mono text-sm uppercase tracking-widest text-on-surface-variant animate-pulse">Loading Gym Telemetry...</div>;
-  
+
   if (!metrics || weeklySplit.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center h-full space-y-6 bg-background">
@@ -201,8 +214,13 @@ export default function OSGymPage() {
             </div>
           </div>
           
-          <div className="flex items-center gap-4 hidden md:flex">
-            {/* Action buttons removed as requested */}
+          <div className="flex items-center gap-3 hidden md:flex">
+            <button
+              onClick={() => setIsCalcOpen(true)}
+              className="px-4 py-2 bg-surface-container-high hover:bg-surface-variant border border-outline-variant/50 rounded-full font-mono text-xs uppercase tracking-widest transition-colors flex items-center gap-2 text-on-surface"
+            >
+              <Calculator className="w-3 h-3" /> Plates
+            </button>
           </div>
         </header>
 
@@ -347,9 +365,43 @@ export default function OSGymPage() {
 
           </div>
 
-          {/* RIGHT COLUMN: Telemetry (Macros, Hydration, Steps, Intention, Muscle Distribution) */}
+          {/* RIGHT COLUMN: Telemetry */}
           <div className="lg:col-span-4 space-y-6">
-            
+
+            {/* Body Metrics */}
+            {metrics && (
+              <div className="glass-panel p-6 rounded-xl border border-card-border">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="font-display text-lg font-bold text-on-surface flex items-center gap-2">
+                    <Scale className="w-5 h-5 text-primary-container" />
+                    Body Metrics
+                  </h3>
+                  <button
+                    onClick={() => setIsMetricsOpen(true)}
+                    className="font-mono text-[10px] uppercase tracking-widest text-primary-container hover:underline"
+                  >
+                    Edit
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="font-mono text-[10px] text-outline uppercase tracking-widest">Weight</p>
+                    <p className="font-display text-2xl font-bold text-on-surface">
+                      {metrics.weight.value}{metrics.weight.unit}
+                    </p>
+                    <p className="font-mono text-xs text-primary-container">{metrics.weight.delta}</p>
+                  </div>
+                  <div>
+                    <p className="font-mono text-[10px] text-outline uppercase tracking-widest">Body Fat</p>
+                    <p className="font-display text-2xl font-bold text-on-surface">
+                      {metrics.bodyFat.value}{metrics.bodyFat.unit}
+                    </p>
+                    <p className="font-mono text-xs text-secondary-container">{metrics.bodyFat.delta}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Consistency Tracker */}
             <ConsistencyTracker />
 
@@ -522,6 +574,21 @@ export default function OSGymPage() {
           </div>
         </div>
       )}
+
+      <BodyMetricsModal
+        isOpen={isMetricsOpen}
+        onClose={() => setIsMetricsOpen(false)}
+        onSave={handleSaveMetrics}
+        initialData={metrics ? {
+          weight_value: metrics.weight.value,
+          weight_unit: metrics.weight.unit,
+          weight_delta: metrics.weight.delta,
+          body_fat_value: metrics.bodyFat.value,
+          body_fat_unit: metrics.bodyFat.unit,
+          body_fat_delta: metrics.bodyFat.delta,
+          body_fat_progress: metrics.bodyFat.progress,
+        } : undefined}
+      />
 
     </div>
   );

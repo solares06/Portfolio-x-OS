@@ -9,11 +9,32 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus("submitting");
-    
-    // Simulate a network request
-    setTimeout(() => {
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.get("name"),
+          email: formData.get("email"),
+          subject: formData.get("subject"),
+          message: formData.get("message"),
+        }),
+      });
+
+      if (!res.ok) {
+        setStatus("error");
+        return;
+      }
+
       setStatus("success");
-    }, 1500);
+      form.reset();
+    } catch {
+      setStatus("error");
+    }
   };
 
   return (
@@ -43,6 +64,7 @@ export default function ContactPage() {
                 <input
                   type="text"
                   id="name"
+                  name="name"
                   required
                   className="w-full bg-transparent border-b border-gray-300 focus:border-primary px-0 py-3 text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors"
                   placeholder="John Doe"
@@ -55,6 +77,7 @@ export default function ContactPage() {
                 <input
                   type="email"
                   id="email"
+                  name="email"
                   required
                   className="w-full bg-transparent border-b border-gray-300 focus:border-primary px-0 py-3 text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors"
                   placeholder="john@example.com"
@@ -69,6 +92,7 @@ export default function ContactPage() {
               <input
                 type="text"
                 id="subject"
+                name="subject"
                 required
                 className="w-full bg-transparent border-b border-gray-300 focus:border-primary px-0 py-3 text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors"
                 placeholder="Project Inquiry"
@@ -81,6 +105,7 @@ export default function ContactPage() {
               </label>
               <textarea
                 id="message"
+                name="message"
                 required
                 rows={4}
                 className="w-full bg-transparent border-b border-gray-300 focus:border-primary px-0 py-3 text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors resize-none"
@@ -106,6 +131,11 @@ export default function ContactPage() {
             {status === "success" && (
               <p className="text-sm text-green-600 font-medium pt-2">
                 Thanks for reaching out! I&apos;ll get back to you soon.
+              </p>
+            )}
+            {status === "error" && (
+              <p className="text-sm text-red-600 font-medium pt-2">
+                Something went wrong. Please try again or email directly.
               </p>
             )}
           </form>

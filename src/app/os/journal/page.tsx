@@ -14,6 +14,15 @@ import ConfirmModal from "@/components/ConfirmModal";
 
 type JournalEntry = { id: string; title: string; body: string; date: string; created_at: string; mood?: string; photoUrls?: string[] };
 
+const MOODS = [
+  { value: "happy", label: "Happy" },
+  { value: "neutral", label: "Neutral" },
+  { value: "focused", label: "Focused" },
+  { value: "stressed", label: "Stressed" },
+  { value: "tired", label: "Tired" },
+  { value: "excited", label: "Excited" },
+] as const;
+
 export default function OSJournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
@@ -64,6 +73,25 @@ export default function OSJournalPage() {
 
   const activeEntry = entries.find((e) => e.id === activeEntryId);
 
+  const handleMoodChange = async (mood: string) => {
+    if (!activeEntry || !activeEntryId) return;
+    const updatedEntry = { ...activeEntry, mood };
+    setEntries(entries.map((e) => (e.id === activeEntryId ? updatedEntry : e)));
+    setSaveStatus("Saving...");
+    try {
+      await saveJournalEntry(activeEntryId, {
+        title: updatedEntry.title,
+        body: updatedEntry.body,
+        date: updatedEntry.date,
+        mood,
+      });
+      setSaveStatus("Saved");
+    } catch (e) {
+      console.error(e);
+      setSaveStatus("Unsaved");
+    }
+  };
+
   const handleEntryUpdate = (field: "title" | "body", value: string) => {
     if (!activeEntry) return;
 
@@ -84,6 +112,7 @@ export default function OSJournalPage() {
           title: updatedEntry.title,
           body: updatedEntry.body,
           date: updatedEntry.date,
+          mood: updatedEntry.mood,
         });
         setSaveStatus("Saved");
       } catch (e) {
@@ -248,6 +277,27 @@ export default function OSJournalPage() {
             <div className="font-mono text-xs text-primary-container tracking-widest mb-4 flex items-center gap-2 uppercase">
               <Calendar className="w-4 h-4" />
               {new Date(activeEntry.date).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </div>
+
+            {/* Mood */}
+            <div className="mb-6">
+              <p className="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest mb-2">Mood</p>
+              <div className="flex flex-wrap gap-2">
+                {MOODS.map((m) => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => handleMoodChange(m.value)}
+                    className={`px-3 py-1.5 rounded-full font-mono text-xs uppercase tracking-wider border transition-colors ${
+                      activeEntry.mood === m.value
+                        ? "bg-primary-container/20 border-primary-container text-primary-container"
+                        : "bg-surface-container-low border-outline-variant text-on-surface-variant hover:border-primary-container/50"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Title */}

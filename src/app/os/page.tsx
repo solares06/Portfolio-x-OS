@@ -29,8 +29,6 @@ export default function OSDashboardPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const now = new Date();
-
   // Modals state
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -46,9 +44,20 @@ export default function OSDashboardPage() {
     title: ''
   });
 
-  const refreshData = async () => {
+  const [viewDate, setViewDate] = useState(() => new Date());
+
+  const now = new Date();
+  const viewYear = viewDate.getFullYear();
+  const viewMonth = viewDate.getMonth();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const startOffset = new Date(viewYear, viewMonth, 1).getDay();
+  const currentMonthLabel = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
+  const todayStr = now.toISOString().split('T')[0];
+
+  const refreshData = async (forDate?: Date) => {
+    const d = forDate ?? viewDate;
     try {
-      const data = await getDashboardData();
+      const data = await getDashboardData(d.getFullYear(), d.getMonth());
       setTasks(data.tasks);
       setEvents(data.events);
     } catch (e) {
@@ -59,9 +68,7 @@ export default function OSDashboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const data = await getDashboardData();
-        setTasks(data.tasks);
-        setEvents(data.events);
+        await refreshData(viewDate);
       } catch (e) {
         console.error(e);
       } finally {
@@ -69,7 +76,11 @@ export default function OSDashboardPage() {
       }
     }
     loadData();
-  }, []);
+  }, [viewDate]);
+
+  const changeMonth = (delta: number) => {
+    setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+  };
 
   const handleSaveTask = async (title: string, dueDate: string | null) => {
     // Optimistic UI
@@ -149,11 +160,9 @@ export default function OSDashboardPage() {
     }
   };
 
-  // Calendar setup (mock 31 days)
-  const daysInMonth = Array.from({ length: 31 }, (_, i) => i + 1);
-  const currentMonth = now.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
-  const currentDateStr = now.toISOString().split('T')[0];
+  // Calendar setup
   const currentDay = now.getDate();
+  const isViewingCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
 
   return (
     <div className="p-8 overflow-y-auto h-full w-full space-y-6 animate-in fade-in duration-500">
@@ -191,14 +200,14 @@ export default function OSDashboardPage() {
             <section className="bg-card border border-card-border rounded-theme p-6 glass-panel neon-glow-hover">
               <header className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-4">
-                  <h2 className="font-display text-xl font-bold">{currentMonth}</h2>
+                  <h2 className="font-display text-xl font-bold">{currentMonthLabel}</h2>
                   <span className="font-mono text-[10px] uppercase tracking-wider bg-surface-container-high text-on-surface-variant px-2 py-1 rounded-sm">
                     SYS.CALENDAR SYNCED
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <button className="p-1 hover:text-primary transition-colors text-on-surface-variant"><ChevronLeft className="w-5 h-5" /></button>
-                  <button className="p-1 hover:text-primary transition-colors text-on-surface-variant"><ChevronRight className="w-5 h-5" /></button>
+                  <button onClick={() => changeMonth(-1)} className="p-1 hover:text-primary transition-colors text-on-surface-variant"><ChevronLeft className="w-5 h-5" /></button>
+                  <button onClick={() => changeMonth(1)} className="p-1 hover:text-primary transition-colors text-on-surface-variant"><ChevronRight className="w-5 h-5" /></button>
                   <button 
                     onClick={() => { setEditingEvent(null); setSelectedDate(null); setIsEventModalOpen(true); }}
                     className="ml-2 flex items-center space-x-1 font-mono text-xs uppercase bg-surface-container border border-card-border px-3 py-1.5 rounded hover:border-primary-container hover:text-primary-container transition-colors"
@@ -216,10 +225,13 @@ export default function OSDashboardPage() {
                     {day}
                   </div>
                 ))}
-                {daysInMonth.map(day => {
-                  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                {Array.from({ length: startOffset }).map((_, i) => (
+                  <div key={`pad-${i}`} className="min-h-[80px]" />
+                ))}
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
+                  const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                   const dayEvents = events.filter(e => e.date === dateStr);
-                  const isToday = day === currentDay;
+                  const isToday = isViewingCurrentMonth && day === currentDay;
 
                   return (
                     <div 
@@ -321,9 +333,9 @@ export default function OSDashboardPage() {
               </header>
 
               <div className="relative border-l-2 border-surface-border pl-6 space-y-8">
-                {events.filter(e => e.date === currentDateStr).length === 0 ? (
+                {events.filter(e => e.date === todayStr).length === 0 ? (
                   <div className="text-on-surface-variant font-mono text-sm">No events scheduled for today.</div>
-                ) : events.filter(e => e.date === currentDateStr).map((entry) => {
+                ) : events.filter(e => e.date === todayStr).map((entry) => {
                   const isPast = entry.time && new Date(`${entry.date}T${entry.time}`) < now;
                   
                   return (

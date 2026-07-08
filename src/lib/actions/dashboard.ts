@@ -2,16 +2,17 @@
 
 import { createClient } from "@/lib/supabase/server";
 
-export async function getDashboardData() {
+export async function getDashboardData(year?: number, month?: number) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) throw new Error("Unauthorized");
 
-  // Fetch this month's events
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  const y = year ?? now.getFullYear();
+  const m = month ?? now.getMonth();
+  const startOfMonth = new Date(y, m, 1).toISOString().split('T')[0];
+  const endOfMonth = new Date(y, m + 1, 0).toISOString().split('T')[0];
   
   const [eventsRes, tasksRes] = await Promise.all([
     supabase
