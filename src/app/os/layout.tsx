@@ -6,6 +6,8 @@ import CommandPalette from "@/components/CommandPalette";
 import { ThemeProvider } from "@/components/os/ThemeProvider";
 import ThemeToggle from "@/components/os/ThemeToggle";
 
+export const dynamic = 'force-dynamic';
+
 export default function OSLayout({
   children,
 }: {
