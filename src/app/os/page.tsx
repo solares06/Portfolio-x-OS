@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
-  Bell,
   Clock,
   ChevronLeft,
   ChevronRight,
@@ -11,8 +10,12 @@ import {
   CheckCircle,
   Circle,
   Filter,
+  Activity,
+  Dumbbell,
+  BookOpen,
+  Target
 } from "lucide-react";
-import { getDashboardData, createEvent, editEvent, deleteEvent } from "@/lib/actions/dashboard";
+import { getDashboardData, createEvent, editEvent, deleteEvent, getTodaySummary, getWeeklyReview } from "@/lib/actions/dashboard";
 import { toggleTaskStatus, createTask, editTask, deleteTask } from "@/lib/actions/tasks";
 import { TaskModal } from "./components/TaskModal";
 import { EventModal } from "./components/EventModal";
@@ -27,6 +30,8 @@ type ConfirmModalState = { isOpen: boolean; type: 'task' | 'event'; id: string; 
 export default function OSDashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [todaySummary, setTodaySummary] = useState<any>(null);
+  const [weeklyReview, setWeeklyReview] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // Modals state
@@ -45,8 +50,9 @@ export default function OSDashboardPage() {
   });
 
   const [viewDate, setViewDate] = useState(() => new Date());
-
-  const now = new Date();
+  const [taskFilter, setTaskFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const istTimeStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+  const now = new Date(istTimeStr);
   const viewYear = viewDate.getFullYear();
   const viewMonth = viewDate.getMonth();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
@@ -54,12 +60,30 @@ export default function OSDashboardPage() {
   const currentMonthLabel = viewDate.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
   const todayStr = now.toISOString().split('T')[0];
 
+  const currentHour = now.getHours();
+  let greeting = 'Morning';
+  if (currentHour < 5 || currentHour >= 17) {
+    greeting = 'Evening';
+  } else if (currentHour < 12) {
+    greeting = 'Morning';
+  } else {
+    greeting = 'Afternoon';
+  }
+
   const refreshData = async (forDate?: Date) => {
     const d = forDate ?? viewDate;
     try {
       const data = await getDashboardData(d.getFullYear(), d.getMonth());
       setTasks(data.tasks);
       setEvents(data.events);
+
+      const summary = await getTodaySummary();
+      setTodaySummary(summary);
+
+      if (now.getDay() === 0) { // Sunday
+        const review = await getWeeklyReview();
+        setWeeklyReview(review);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -103,7 +127,7 @@ export default function OSDashboardPage() {
     })();
   };
 
-  const handleSaveEvent = async (title: string, date: string, time: string | null) => {
+  const handleSaveEvent = async (title: string, date: string, time: string | null, recurrence_rule: string | null) => {
     // Optimistic UI
     if (editingEvent) {
       setEvents(events.map(e => e.id === editingEvent.id ? { ...e, title, date, time } : e));
@@ -114,9 +138,9 @@ export default function OSDashboardPage() {
     (async () => {
       try {
         if (editingEvent) {
-          await editEvent(editingEvent.id, title, date, time);
+          await editEvent(editingEvent.id, title, date, time, recurrence_rule);
         } else {
-          await createEvent(title, date, time);
+          await createEvent(title, date, time, recurrence_rule);
         }
       } finally {
         await refreshData();
@@ -164,37 +188,96 @@ export default function OSDashboardPage() {
   const currentDay = now.getDate();
   const isViewingCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
 
+  const cycleFilter = () => {
+    if (taskFilter === 'all') setTaskFilter('active');
+    else if (taskFilter === 'active') setTaskFilter('completed');
+    else setTaskFilter('all');
+  };
+
+  const filteredTasks = tasks.filter(t => {
+    if (taskFilter === 'active') return !t.done;
+    if (taskFilter === 'completed') return t.done;
+    return true;
+  });
+
   return (
     <div className="p-8 overflow-y-auto h-full w-full space-y-6 animate-in fade-in duration-500">
-      {/* Top Bar */}
-      <header className="flex items-center justify-between bg-card border border-card-border rounded-theme p-4 glass-panel">
-        <div className="flex items-center space-x-4">
-          <div className="font-mono text-xl font-bold tracking-widest text-primary-container">
-            Core_OS
-          </div>
-        </div>
-        <div className="flex items-center space-x-6 text-on-surface-variant">
-          <div className="flex items-center space-x-2 font-mono text-sm">
-            <Clock className="w-4 h-4" />
-            <span>{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-          </div>
-          <button className="hover:text-primary transition-colors relative">
-            <Bell className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary-container rounded-full animate-pulse"></span>
-          </button>
-          <div className="w-8 h-8 rounded-sm bg-surface-bright border border-card-border overflow-hidden">
-            <Image src="https://picsum.photos/seed/user/100/100" alt="Avatar" width={100} height={100} className="w-full h-full object-cover" />
-          </div>
-        </div>
-      </header>
-
+      
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="w-8 h-8 border-4 border-primary-container border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
+        <>
+          {/* Dashboard Header & Summary Panels */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="md:col-span-2">
+              <h1 className="font-display text-4xl font-bold text-on-surface mb-2">
+                Good {greeting}.
+              </h1>
+              <p className="text-on-surface-variant font-mono text-sm">
+                Today is {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.
+              </p>
+            </div>
+
+            {/* Dynamic Panel: Weekly Review (Sunday) OR Today Summary (Other days) */}
+            {now.getDay() === 0 && weeklyReview ? (
+              <div className="bg-secondary-container/10 border border-secondary-container/30 rounded-xl p-5 shadow-lg backdrop-blur-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-display font-bold text-secondary-container text-lg flex items-center gap-2">
+                    <Activity className="w-5 h-5" /> Weekly Review
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-on-surface-variant font-mono">Tasks Completed</span>
+                    <span className="font-bold text-on-surface">{weeklyReview.tasksCompleted}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-on-surface-variant font-mono">Gym Days Logged</span>
+                    <span className="font-bold text-on-surface">{weeklyReview.gymDays} / 4</span>
+                  </div>
+                  <div className="pt-2 border-t border-outline-variant/30 text-xs text-secondary-container font-mono text-center">
+                    {weeklyReview.tasksCompleted > 10 ? "Great week! Time to recharge." : "Steady progress. Let's plan for next week."}
+                  </div>
+                </div>
+              </div>
+            ) : todaySummary ? (
+              <div className="bg-primary-container/10 border border-primary-container/30 rounded-xl p-5 shadow-lg backdrop-blur-sm">
+                <h3 className="font-display font-bold text-primary-container mb-4 text-lg">Today's Focus</h3>
+                <div className="space-y-4">
+                  {todaySummary.gymWorkout && (
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary-container/20 rounded text-primary-container"><Dumbbell className="w-4 h-4" /></div>
+                      <div>
+                        <div className="text-xs text-on-surface-variant font-mono uppercase tracking-widest">Gym</div>
+                        <div className="text-sm font-bold text-on-surface">{todaySummary.gymWorkout}</div>
+                      </div>
+                    </div>
+                  )}
+                  {todaySummary.nextClass && (
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-secondary-container/20 rounded text-secondary-container"><BookOpen className="w-4 h-4" /></div>
+                      <div>
+                        <div className="text-xs text-on-surface-variant font-mono uppercase tracking-widest">Next Class</div>
+                        <div className="text-sm font-bold text-on-surface">{todaySummary.nextClass.code} - {todaySummary.nextClass.title}</div>
+                      </div>
+                    </div>
+                  )}
+                  {todaySummary.openTasks.length > 0 && (
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-tertiary-container/20 rounded text-tertiary-container"><Target className="w-4 h-4" /></div>
+                      <div>
+                        <div className="text-xs text-on-surface-variant font-mono uppercase tracking-widest">Top Task</div>
+                        <div className="text-sm font-bold text-on-surface truncate w-40">{todaySummary.openTasks[0].title}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Calendar */}
           <div className="lg:col-span-2 space-y-6">
             <section className="bg-card border border-card-border rounded-theme p-6 glass-panel neon-glow-hover">
@@ -282,17 +365,17 @@ export default function OSDashboardPage() {
                     <Plus className="w-4 h-4" />
                     <span>Add</span>
                   </button>
-                  <button className="flex items-center space-x-1 font-mono text-xs text-on-surface-variant hover:text-primary transition-colors">
+                  <button onClick={cycleFilter} className="flex items-center space-x-1 font-mono text-xs text-on-surface-variant hover:text-primary transition-colors">
                     <Filter className="w-4 h-4" />
-                    <span>Filter</span>
+                    <span>{taskFilter.toUpperCase()}</span>
                   </button>
                 </div>
               </header>
               
               <div className="space-y-3">
-                {tasks.length === 0 ? (
+                {filteredTasks.length === 0 ? (
                   <div className="text-on-surface-variant font-mono text-sm text-center py-4">No active protocols</div>
-                ) : tasks.map(task => (
+                ) : filteredTasks.map(task => (
                   <div key={task.id} className={`flex items-start space-x-4 p-4 rounded-theme border transition-all ${task.done ? 'bg-surface-container-lowest border-transparent opacity-50' : 'bg-surface-container border-card-border hover:border-outline-variant'}`}>
                     <button onClick={() => toggleTask(task.id, task.done)} className="mt-1 flex-shrink-0 text-on-surface-variant hover:text-primary transition-colors">
                       {task.done ? <CheckCircle className="w-5 h-5 text-primary-container" /> : <Circle className="w-5 h-5" />}
@@ -373,6 +456,7 @@ export default function OSDashboardPage() {
             </section>
           </div>
         </div>
+        </>
       )}
 
       {/* Modals */}
@@ -387,6 +471,10 @@ export default function OSDashboardPage() {
         isOpen={isEventModalOpen}
         onClose={() => setIsEventModalOpen(false)}
         onSave={handleSaveEvent}
+        onDelete={editingEvent ? () => {
+          setIsEventModalOpen(false);
+          setConfirmModal({ isOpen: true, type: 'event', id: editingEvent.id, title: editingEvent.title });
+        } : undefined}
         initialData={editingEvent ? { title: editingEvent.title, date: editingEvent.date, time: editingEvent.time } : selectedDate ? { title: "", date: selectedDate, time: null } : undefined}
       />
 

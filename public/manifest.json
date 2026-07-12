@@ -1,0 +1,16 @@
+{
+  "name": "Core_OS",
+  "short_name": "Core_OS",
+  "description": "Personal Operating System and Telemetry",
+  "start_url": "/os",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [
+    {
+      "src": "/icon-512.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

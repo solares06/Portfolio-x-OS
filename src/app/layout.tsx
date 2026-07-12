@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 import "./globals.css";
 
 /* ── Public theme fonts (kept for backward compat) ── */
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${GeistSans.variable} ${GeistMono.variable} ${jetbrainsMono.variable} antialiased`}
       >
+        <AnalyticsTracker />
         {children}
       </body>
     </html>

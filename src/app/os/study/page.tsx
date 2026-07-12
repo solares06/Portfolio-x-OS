@@ -12,7 +12,9 @@ import {
   Clock as ClockIcon,
   Edit2,
   Trash2,
-  Plus
+  Plus,
+  Hourglass,
+  Timer
 } from "lucide-react";
 import { 
   getSemesterTracker,
@@ -22,6 +24,7 @@ import { SemesterClass } from "@/lib/mock-data";
 import Link from "next/link";
 import SemesterClassModal from "../components/SemesterClassModal";
 import ConfirmModal from "@/components/ConfirmModal";
+import StudyConsistencyTracker from "@/components/study/StudyConsistencyTracker";
 
 export default function OSStudyPage() {
   const [semester, setSemester] = useState<SemesterClass[]>([]);
@@ -71,6 +74,22 @@ export default function OSStudyPage() {
 
   if (loading) return <div className="p-8">Loading Study Nexus...</div>;
 
+  const parseDaysRemaining = (dateStr: string) => {
+    if (!dateStr || dateStr.toLowerCase() === 'tbd' || dateStr.toLowerCase() === 'none') return null;
+    let parsed = new Date(dateStr);
+    if (isNaN(parsed.getTime())) {
+      parsed = new Date(dateStr + ", " + new Date().getFullYear());
+    }
+    if (isNaN(parsed.getTime())) return null;
+    const diffTime = parsed.getTime() - new Date().getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const countdowns = semester
+    .map(cls => ({ ...cls, days: parseDaysRemaining(cls.nextDue) }))
+    .filter(cls => cls.days !== null && cls.days >= 0 && cls.days <= 60)
+    .sort((a, b) => (a.days || 0) - (b.days || 0));
+
   return (
     <div className="p-8 h-full w-full overflow-y-auto animate-in fade-in duration-500 custom-scrollbar">
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -84,6 +103,32 @@ export default function OSStudyPage() {
       </div>
 
       <div className="space-y-8">
+        
+        {/* Exam Countdown Widgets */}
+        {countdowns.length > 0 && (
+          <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+            {countdowns.map(cls => (
+              <div key={`countdown-${cls.id}`} className="glass-panel p-4 rounded-theme border border-primary-container/20 min-w-[200px] flex-shrink-0 flex items-center gap-4 bg-primary-container/5 relative overflow-hidden group">
+                <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Timer className="w-24 h-24 text-primary-container" />
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-surface-variant flex flex-col items-center justify-center border border-card-border relative z-10">
+                  <span className="font-display text-xl font-bold text-primary-container leading-none">{cls.days}</span>
+                  <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface-variant mt-1">Days</span>
+                </div>
+                <div className="relative z-10">
+                  <h4 className="font-bold text-sm text-foreground truncate max-w-[120px]">{cls.subject}</h4>
+                  <p className="text-xs text-on-surface-variant truncate max-w-[120px]">{cls.nextDueLabel}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mb-6 h-auto">
+          <StudyConsistencyTracker />
+        </div>
+
         <section className="glass-panel rounded-theme border border-card-border p-6 flex flex-col gap-4">
           <div className="flex justify-between items-center border-b border-card-border pb-4">
             <h3 className="font-display text-2xl text-foreground flex items-center gap-2 font-bold">

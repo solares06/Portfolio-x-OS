@@ -148,11 +148,11 @@ export default function ContactPage() {
               Direct Contact
             </h3>
             <div className="space-y-4">
-              <a href="mailto:hello@example.com" className="flex items-center gap-3 text-gray-600 hover:text-primary transition-colors group">
+              <a href="mailto:souranilsen06@gmail.com" className="flex items-center gap-3 text-gray-600 hover:text-primary transition-colors group">
                 <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                   <Mail className="w-4 h-4" />
                 </div>
-                <span>hello@example.com</span>
+                <span>souranilsen06@gmail.com</span>
               </a>
               <div className="flex items-center gap-3 text-gray-600">
                 <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">

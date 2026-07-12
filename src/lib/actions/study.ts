@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "../supabase/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function getSemesterTracker() {
   const supabase = await createClient();
@@ -27,91 +28,6 @@ export async function getSemesterTracker() {
   }));
 }
 
-export async function getWorkspaces() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
-  
-  // 1. Fetch workspaces
-  const { data: workspacesData, error: wError } = await supabase
-    .from("study_workspaces")
-    .select("*")
-    .order("created_at", { ascending: true });
-
-  if (wError || !workspacesData || workspacesData.length === 0) {
-    return [];
-  }
-
-  const workspaceIds = workspacesData.map(w => w.id);
-
-  // 2. Fetch all related data in parallel
-  const [notesRes, tasksRes, videosRes, msgsRes] = await Promise.all([
-    supabase.from("study_notes").select("*").in("workspace_id", workspaceIds),
-    supabase.from("study_tasks").select("*").in("workspace_id", workspaceIds),
-    supabase.from("study_videos").select("*").in("workspace_id", workspaceIds),
-    supabase.from("study_messages").select("*").in("workspace_id", workspaceIds)
-  ]);
-
-  const notes = notesRes.data || [];
-  const tasks = tasksRes.data || [];
-  const videos = videosRes.data || [];
-  const messages = msgsRes.data || [];
-
-  // 3. Reconstruct the complex object
-  return workspacesData.map(w => ({
-    id: w.id,
-    title: w.title,
-    icon: w.icon,
-    progress: w.progress,
-    leetcodeCount: w.leetcode_count,
-    notes: notes.filter(n => n.workspace_id === w.id).map(n => ({
-      id: n.id,
-      title: n.title,
-      excerpt: n.excerpt
-    })).length > 0 ? notes.filter(n => n.workspace_id === w.id).map(n => ({
-      id: n.id,
-      title: n.title,
-      excerpt: n.excerpt
-    })) : undefined,
-    tasks: tasks.filter(t => t.workspace_id === w.id).map(t => ({
-      id: t.id,
-      title: t.title,
-      difficulty: t.difficulty,
-      completed: t.completed
-    })).length > 0 ? tasks.filter(t => t.workspace_id === w.id).map(t => ({
-      id: t.id,
-      title: t.title,
-      difficulty: t.difficulty,
-      completed: t.completed
-    })) : undefined,
-    videos: videos.filter(v => v.workspace_id === w.id).map(v => ({
-      id: v.id,
-      title: v.title,
-      duration: v.duration,
-      status: v.status,
-      thumbnailUrl: v.thumbnail_url
-    })).length > 0 ? videos.filter(v => v.workspace_id === w.id).map(v => ({
-      id: v.id,
-      title: v.title,
-      duration: v.duration,
-      status: v.status,
-      thumbnailUrl: v.thumbnail_url
-    })) : undefined,
-    messages: messages.filter(m => m.workspace_id === w.id).map(m => ({
-      id: m.id,
-      user: m.sender_name,
-      timeAgo: m.time_ago,
-      content: m.content,
-      reply: m.reply
-    })).length > 0 ? messages.filter(m => m.workspace_id === w.id).map(m => ({
-      id: m.id,
-      user: m.sender_name,
-      timeAgo: m.time_ago,
-      content: m.content,
-      reply: m.reply
-    })) : undefined
-  }));
-}
 
 // -------------------------------------------------------------
 // CRUD Operations
@@ -163,45 +79,6 @@ export async function deleteSemesterClass(id: string) {
   if (error) throw error;
 }
 
-export async function createWorkspace(title: string, icon: string, progress?: number, leetcode_count?: number) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-
-  const { error } = await supabase
-    .from("study_workspaces")
-    .insert([{ title, icon, progress, leetcode_count, user_id: user.id }]);
-
-  if (error) throw error;
-}
-
-export async function editWorkspace(id: string, title: string, icon: string, progress?: number, leetcode_count?: number) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-
-  const { error } = await supabase
-    .from("study_workspaces")
-    .update({ title, icon, progress, leetcode_count })
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) throw error;
-}
-
-export async function deleteWorkspace(id: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-
-  const { error } = await supabase
-    .from("study_workspaces")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) throw error;
-}
 
 // --- STUDY NEXUS (ML, DSA, WEB DEV) ---
 
@@ -380,4 +257,200 @@ export async function deleteStudyProject(id: string) {
     .eq("user_id", user.id);
 
   if (error) throw error;
+}
+
+// --- LEETCODE STATS ---
+
+export async function getLeetCodeCountToday(dateStr: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const { data, error } = await supabase
+    .from("study_leetcode_stats")
+    .select("count")
+    .eq("user_id", user.id)
+    .eq("date", dateStr)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error(error);
+    return 0;
+  }
+  return data?.count || 0;
+}
+
+export async function updateLeetCodeCount(dateStr: string, count: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_leetcode_stats")
+    .upsert({ user_id: user.id, date: dateStr, count }, { onConflict: 'user_id,date' });
+
+  if (error) throw error;
+}
+
+export async function reviewStudySubtopic(subtopicId: string, quality: number) {
+  // quality: 0 (Hard), 1 (Good), 2 (Easy) -> maps to 1, 3, 5 for SM-2
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("study_subtopics")
+    .select("interval_days, ease_factor")
+    .eq("id", subtopicId)
+    .single();
+
+  if (error || !data) throw new Error("Failed to fetch subtopic");
+
+  let { interval_days, ease_factor } = data;
+  let next_review = new Date();
+
+  // SM-2 Algorithm mapping: 0 -> 1 (Hard), 1 -> 3 (Good), 2 -> 5 (Easy)
+  const q = quality === 0 ? 1 : quality === 1 ? 3 : 5;
+
+  if (q < 3) {
+    interval_days = 1;
+  } else {
+    if (interval_days === 0) {
+      interval_days = 1;
+    } else if (interval_days === 1) {
+      interval_days = 6;
+    } else {
+      interval_days = Math.round(interval_days * ease_factor);
+    }
+  }
+
+  ease_factor = ease_factor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+  if (ease_factor < 1.3) ease_factor = 1.3;
+
+  next_review.setDate(next_review.getDate() + interval_days);
+
+  const { error: updateError } = await supabase
+    .from("study_subtopics")
+    .update({ 
+      last_reviewed: new Date().toISOString(),
+      next_review: next_review.toISOString(),
+      interval_days,
+      ease_factor
+    })
+    .eq("id", subtopicId);
+
+  if (updateError) throw updateError;
+}
+
+export async function importCurriculumWithAI(domain: string, syllabusText: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+
+  const prompt = `
+You are an expert curriculum designer. The user has provided a raw syllabus or course outline.
+Your task is to parse this syllabus into structured Topics, and for each Topic, a list of Subtopics.
+Return ONLY valid JSON in the following format:
+{
+  "topics": [
+    {
+      "title": "Topic Name",
+      "subtopics": ["Subtopic 1", "Subtopic 2"]
+    }
+  ]
+}
+If the syllabus is very short, break it down logically. If it's very long, group it logically into a max of 10-12 major topics.
+Here is the syllabus text:
+${syllabusText}
+  `;
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: { responseMimeType: "application/json" }
+  });
+
+  const aiResponse = result.response.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(aiResponse);
+  } catch (e) {
+    throw new Error("Failed to parse AI response");
+  }
+
+  if (!parsed.topics || !Array.isArray(parsed.topics)) {
+    throw new Error("Invalid AI response format");
+  }
+
+  // Insert topics and subtopics
+  for (const topic of parsed.topics) {
+    const { data: topicData, error: topicError } = await supabase
+      .from("study_topics")
+      .insert([{ 
+        user_id: user.id, 
+        domain, 
+        title: topic.title, 
+        source_name: 'AI Generated' 
+      }])
+      .select()
+      .single();
+
+    if (topicError || !topicData) continue;
+
+    if (topic.subtopics && Array.isArray(topic.subtopics)) {
+      const subtopicInserts = topic.subtopics.map((st: string) => ({
+        topic_id: topicData.id,
+        title: st
+      }));
+      if (subtopicInserts.length > 0) {
+        await supabase.from("study_subtopics").insert(subtopicInserts);
+      }
+    }
+  }
+}
+
+export async function getStudyConsistencyData() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("study_consistency_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("date", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return data;
+}
+
+export async function toggleStudyConsistencyDay(dateStr: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data: existing } = await supabase
+    .from("study_consistency_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("date", dateStr)
+    .single();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("study_consistency_logs")
+      .update({ completed: !existing.completed })
+      .eq("id", existing.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from("study_consistency_logs")
+      .insert([{ user_id: user.id, date: dateStr, completed: true }]);
+    if (error) throw error;
+  }
 }

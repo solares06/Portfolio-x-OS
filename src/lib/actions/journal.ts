@@ -85,6 +85,7 @@ export async function saveJournalEntry(id: string | null, entry: { title: string
           title: entry.title,
           body: entry.body,
           date: entry.date,
+          mood: entry.mood ?? null,
           user_id: user.id,
         },
       ]);

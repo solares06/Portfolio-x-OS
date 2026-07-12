@@ -241,3 +241,152 @@ export async function deleteTeamMember(id: string) {
 
   if (error) throw error;
 }
+
+// -------------------------------------------------------------
+// Extensions: Archive Upload
+// -------------------------------------------------------------
+export async function uploadArchivePhoto(title: string, formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const file = formData.get('file') as File;
+  if (!file) throw new Error("No file uploaded");
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${user.id}/${Math.random()}.${fileExt}`;
+
+  // Upload to storage
+  const { error: uploadError } = await supabase.storage
+    .from('ec-archive')
+    .upload(fileName, file);
+  
+  if (uploadError) throw uploadError;
+
+  // Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('ec-archive')
+    .getPublicUrl(fileName);
+
+  // Insert to database
+  const { error: dbError } = await supabase
+    .from("ec_archive")
+    .insert([{ user_id: user.id, title, image_url: publicUrl }]);
+
+  if (dbError) throw dbError;
+}
+
+// -------------------------------------------------------------
+// Extensions: Sponsor Pipeline
+// -------------------------------------------------------------
+export async function getSponsorPipeline() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("ec_sponsor_pipeline")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching sponsor pipeline:", error);
+    return [];
+  }
+  return data;
+}
+
+export async function createSponsorLead(company: string, status: string, amount?: string, notes?: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_sponsor_pipeline")
+    .insert([{ user_id: user.id, company, status, amount, notes }]);
+  if (error) throw error;
+}
+
+export async function updateSponsorLead(id: string, company: string, status: string, amount?: string, notes?: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_sponsor_pipeline")
+    .update({ company, status, amount, notes })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) throw error;
+}
+
+export async function deleteSponsorLead(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_sponsor_pipeline")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) throw error;
+}
+
+// -------------------------------------------------------------
+// Extensions: Meeting Notes
+// -------------------------------------------------------------
+export async function getMeetingNotes() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("ec_meeting_notes")
+    .select("*")
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching meeting notes:", error);
+    return [];
+  }
+  return data;
+}
+
+export async function createMeetingNote(title: string, date: string, content: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_meeting_notes")
+    .insert([{ user_id: user.id, title, date, content }]);
+  if (error) throw error;
+}
+
+export async function updateMeetingNote(id: string, title: string, date: string, content: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_meeting_notes")
+    .update({ title, date, content })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) throw error;
+}
+
+export async function deleteMeetingNote(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("ec_meeting_notes")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) throw error;
+}

@@ -9,8 +9,18 @@ import {
   Plus,
   Calculator,
   Scale,
+  Copy,
+  RefreshCcw,
+  Activity,
+  X
 } from "lucide-react";
-import { getWeeklySplit, getBodyMetrics, getWorkoutDay, initializeGymProfile, createExercise, updateWeeklySplitType, createWorkoutDay, getMuscleDistribution, updateBodyMetrics } from "@/lib/actions/gym";
+import { 
+  getWeeklySplit, getBodyMetrics, getWorkoutDay, initializeGymProfile, 
+  createExercise, updateWeeklySplitType, createWorkoutDay, getMuscleDistribution, 
+  updateBodyMetrics, uploadGymPhoto, deleteGymPhoto, generateAndEmailCycleReport,
+  getGymCycleInfo, getWorkoutTemplates, saveWorkoutAsTemplate, loadTemplateIntoWorkout, 
+  syncGoogleFit, getGoogleFitStatus, getGoogleFitWeeklyData
+} from "@/lib/actions/gym";
 import { WeeklySplitDay, BodyMetrics, WorkoutDay } from "@/lib/mock-data";
 import ExerciseSets from "@/components/gym/ExerciseSets";
 import ConsistencyTracker from "@/components/gym/ConsistencyTracker";
@@ -33,6 +43,58 @@ export default function OSGymPage() {
   const [isMetricsOpen, setIsMetricsOpen] = useState(false);
   const [targetWeight, setTargetWeight] = useState(100);
   const [barWeight, setBarWeight] = useState(20);
+  
+  const [isUploading, setIsUploading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  const [cycleInfo, setCycleInfo] = useState({ currentWeek: 1, cycleLength: 8 });
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
+  const [isSyncingHealth, setIsSyncingHealth] = useState(false);
+  const [fitConnected, setFitConnected] = useState(false);
+  const [fitLastSync, setFitLastSync] = useState<string | null>(null);
+  const [fitData, setFitData] = useState<any[]>([]);
+  
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const url = await uploadGymPhoto(formData);
+      setMetrics(prev => prev ? { ...prev, photoUrl: url } : null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!confirm("Are you sure you want to delete this progress photo?")) return;
+    try {
+      await deleteGymPhoto();
+      setMetrics(prev => prev ? { ...prev, photoUrl: undefined } : null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete photo");
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    setIsGenerating(true);
+    try {
+      await generateAndEmailCycleReport();
+      alert("Cycle report generated and sent to your email!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate report");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const calculatePlates = () => {
     let remaining = (targetWeight - barWeight) / 2;
@@ -53,14 +115,20 @@ export default function OSGymPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [split, m, distribution] = await Promise.all([
+        const [split, m, distribution, cycle, savedTemplates, fData] = await Promise.all([
           getWeeklySplit(),
           getBodyMetrics(),
-          getMuscleDistribution()
+          getMuscleDistribution(),
+          getGymCycleInfo(),
+          getWorkoutTemplates(),
+          getGoogleFitWeeklyData()
         ]);
         setWeeklySplit(split);
         setMetrics(m);
         setMuscleDistribution(distribution);
+        setCycleInfo(cycle);
+        setTemplates(savedTemplates);
+        setFitData(fData);
         
         if (split.length > 0) {
           const currentDayStr = new Date().toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
@@ -169,6 +237,74 @@ export default function OSGymPage() {
     setMetrics(m);
   };
 
+  const handleSyncHealth = async () => {
+    // Check if Google Fit is connected
+    const status = await getGoogleFitStatus();
+    if (!status.connected) {
+      // Redirect to Google Fit OAuth
+      window.location.href = '/api/google-fit/auth';
+      return;
+    }
+
+    setIsSyncingHealth(true);
+    try {
+      const result = await syncGoogleFit();
+      const m = await getBodyMetrics();
+      const f = await getGoogleFitWeeklyData();
+      setMetrics(m);
+      setFitData(f);
+      setFitLastSync(new Date().toISOString());
+      alert(`Google Fit data synced! (${result.days} days updated)`);
+    } catch (err: unknown) {
+      console.error(err);
+      const message = err instanceof Error ? err.message : 'Failed to sync';
+      if (message.includes('reconnect')) {
+        window.location.href = '/api/google-fit/auth';
+      } else {
+        alert(message);
+      }
+    } finally {
+      setIsSyncingHealth(false);
+    }
+  };
+
+  // Check Google Fit connection on load
+  useEffect(() => {
+    getGoogleFitStatus().then(status => {
+      setFitConnected(status.connected);
+      if (status.lastSync) setFitLastSync(status.lastSync);
+    });
+  }, []);
+
+  const handleSaveTemplate = async () => {
+    if (!workoutDay) return;
+    const name = prompt("Enter a name for this template:", workoutDay.title);
+    if (!name) return;
+    
+    try {
+      await saveWorkoutAsTemplate(workoutDay.id, name);
+      setTemplates(await getWorkoutTemplates());
+      alert("Template saved successfully.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save template.");
+    }
+  };
+
+  const handleLoadTemplate = async (templateId: string) => {
+    if (!workoutDay) return;
+    if (!confirm("This will overwrite your current day's exercises. Continue?")) return;
+
+    try {
+      await loadTemplateIntoWorkout(templateId, workoutDay.id);
+      setIsTemplatesModalOpen(false);
+      setWorkoutDay(await getWorkoutDay(activeSplitDay?.dayLabel));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load template.");
+    }
+  };
+
   if (loading) return <div className="p-8 font-mono text-sm uppercase tracking-widest text-on-surface-variant animate-pulse">Loading Gym Telemetry...</div>;
 
   if (!metrics || weeklySplit.length === 0) {
@@ -216,6 +352,12 @@ export default function OSGymPage() {
           
           <div className="flex items-center gap-3 hidden md:flex">
             <button
+              onClick={() => setIsTemplatesModalOpen(true)}
+              className="px-4 py-2 bg-surface-container-high hover:bg-surface-variant border border-outline-variant/50 rounded-full font-mono text-xs uppercase tracking-widest transition-colors flex items-center gap-2 text-on-surface"
+            >
+              <Copy className="w-3 h-3" /> Templates
+            </button>
+            <button
               onClick={() => setIsCalcOpen(true)}
               className="px-4 py-2 bg-surface-container-high hover:bg-surface-variant border border-outline-variant/50 rounded-full font-mono text-xs uppercase tracking-widest transition-colors flex items-center gap-2 text-on-surface"
             >
@@ -240,7 +382,12 @@ export default function OSGymPage() {
                   <h1 className="font-display text-4xl text-on-surface font-bold">Custom Split</h1>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-on-surface-variant font-mono">Week 4 of 8</div>
+                  {cycleInfo.currentWeek >= cycleInfo.cycleLength && (
+                    <div className="mb-2 inline-block px-3 py-1 bg-error/20 text-error font-mono text-[10px] rounded-full uppercase tracking-widest font-bold animate-pulse shadow-[0_0_15px_rgba(255,0,0,0.5)]">
+                      ⚠ DELOAD WEEK RECOMMENDED
+                    </div>
+                  )}
+                  <div className="text-sm text-on-surface-variant font-mono">Week {cycleInfo.currentWeek} of {cycleInfo.cycleLength}</div>
                   <div className="text-xs text-on-surface-variant mt-1">Consistency: <span className="text-primary-container font-bold">85%</span> <span className="text-secondary-container">· 4 Wk Streak 🔥</span></div>
                 </div>
               </div>
@@ -335,7 +482,7 @@ export default function OSGymPage() {
 
                     {/* Advanced Sets View */}
                     {expandedExercise === ex.id && (
-                      <ExerciseSets exerciseSet={ex.sets?.[0] || { id: ex.id, details: ex.target }} />
+                      <ExerciseSets exerciseName={ex.name} exerciseSet={ex.sets?.[0] || { id: ex.id, details: ex.target }} />
                     )}
                   </div>
                 )))}
@@ -349,17 +496,37 @@ export default function OSGymPage() {
                   <ImageIcon className="w-5 h-5 text-primary-container" />
                   <h2 className="font-display text-xl text-on-surface font-bold">Growth Journey</h2>
                 </div>
-                <button className="px-4 py-2 bg-surface-container-high hover:bg-surface-variant border border-outline-variant/50 rounded-full font-mono text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
-                  <Upload className="w-3 h-3" /> Upload Photo
-                </button>
+                <label className="cursor-pointer px-4 py-2 bg-surface-container-high hover:bg-surface-variant border border-outline-variant/50 rounded-full font-mono text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
+                  {isUploading ? (
+                    <span className="w-3 h-3 border-2 border-primary-container border-t-transparent rounded-full animate-spin"></span>
+                  ) : (
+                    <Upload className="w-3 h-3" />
+                  )} 
+                  Upload Photo
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={isUploading} />
+                </label>
               </div>
               <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-                <div className="w-32 h-32 shrink-0 rounded-lg overflow-hidden border border-card-border relative">
-                   <Image alt="Progress" src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=400" width={128} height={128} className="object-cover w-full h-full" />
-                </div>
-                <div className="w-32 h-32 shrink-0 rounded-lg border border-dashed border-outline-variant/50 flex items-center justify-center cursor-pointer hover:border-primary-container/50 transition-colors">
+                {(metrics as any)?.photoUrl ? (
+                  <div className="w-32 h-32 shrink-0 rounded-lg overflow-hidden border border-card-border relative group">
+                     <Image alt="Progress" src={(metrics as any).photoUrl} width={128} height={128} className="object-cover w-full h-full" />
+                     <button
+                       onClick={handleDeletePhoto}
+                       className="absolute top-1 right-1 bg-black/60 hover:bg-error/80 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                       title="Delete Photo"
+                     >
+                       <X className="w-4 h-4" />
+                     </button>
+                  </div>
+                ) : (
+                  <div className="w-32 h-32 shrink-0 rounded-lg overflow-hidden border border-card-border relative">
+                     <Image alt="Progress" src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=400" width={128} height={128} className="object-cover w-full h-full opacity-50" />
+                  </div>
+                )}
+                <label className="w-32 h-32 shrink-0 rounded-lg border border-dashed border-outline-variant/50 flex items-center justify-center cursor-pointer hover:border-primary-container/50 transition-colors">
                   <span className="font-mono text-xs uppercase text-outline">Add</span>
-                </div>
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={isUploading} />
+                </label>
               </div>
             </div>
 
@@ -376,12 +543,22 @@ export default function OSGymPage() {
                     <Scale className="w-5 h-5 text-primary-container" />
                     Body Metrics
                   </h3>
-                  <button
-                    onClick={() => setIsMetricsOpen(true)}
-                    className="font-mono text-[10px] uppercase tracking-widest text-primary-container hover:underline"
-                  >
-                    Edit
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSyncHealth}
+                      disabled={isSyncingHealth}
+                      className={`font-mono text-[10px] uppercase tracking-widest hover:underline disabled:opacity-50 flex items-center gap-1 ${fitConnected ? 'text-green-400' : 'text-secondary-container'}`}
+                    >
+                      <Activity className="w-3 h-3" />
+                      {isSyncingHealth ? 'Syncing...' : fitConnected ? 'Sync Google Fit' : 'Connect Google Fit'}
+                    </button>
+                    <button
+                      onClick={() => setIsMetricsOpen(true)}
+                      className="font-mono text-[10px] uppercase tracking-widest text-primary-container hover:underline"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -402,7 +579,45 @@ export default function OSGymPage() {
               </div>
             )}
 
+            {/* Health Activity (Google Fit) */}
+            {fitData && fitData.length > 0 && (
+              <div className="glass-panel p-6 rounded-xl border border-card-border mt-6 mb-6">
+                <h3 className="font-display text-lg font-bold text-on-surface mb-4 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-green-400" />
+                  Health Activity <span className="text-[10px] uppercase font-mono text-outline font-normal ml-2">7 Days</span>
+                </h3>
+                <div className="space-y-4">
+                  {fitData.slice(-3).reverse().map((day: any) => (
+                    <div key={day.date} className="flex justify-between items-center border-b border-surface-container/50 pb-2 last:border-0 last:pb-0">
+                      <div>
+                        <p className="font-mono text-xs text-on-surface">{new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                      </div>
+                      <div className="flex gap-4 text-right">
+                        <div>
+                          <p className="font-mono text-[10px] text-outline uppercase">Steps</p>
+                          <p className="font-mono text-sm text-green-300">{day.steps?.toLocaleString() || '-'}</p>
+                        </div>
+                        <div>
+                          <p className="font-mono text-[10px] text-outline uppercase">Kcal</p>
+                          <p className="font-mono text-sm text-orange-300">{day.calories_burned || '-'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Consistency Tracker */}
+            <div className="flex justify-end mb-4">
+               <button 
+                 onClick={handleGenerateReport} 
+                 disabled={isGenerating}
+                 className="px-3 py-1 bg-surface-container hover:bg-surface-variant border border-outline-variant rounded font-mono text-[10px] uppercase tracking-widest transition-colors flex items-center gap-2 disabled:opacity-50"
+               >
+                 {isGenerating ? "Generating..." : "Generate Cycle Report"}
+               </button>
+            </div>
             <ConsistencyTracker />
 
             {/* Muscle Distribution Chart */}
@@ -495,8 +710,6 @@ export default function OSGymPage() {
         </div>
       )}
 
-      {/* Growth Journey & Add Modal sections below... */}
-
       {/* Plate Calculator Modal */}
       {isCalcOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -508,26 +721,6 @@ export default function OSGymPage() {
               </button>
             </div>
             <div className="p-6 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-mono text-xs text-on-surface-variant uppercase tracking-widest mb-2">Target Weight (kg)</label>
-                  <input 
-                    type="number" 
-                    value={targetWeight}
-                    onChange={(e) => setTargetWeight(Number(e.target.value))}
-                    className="w-full bg-[#0a0a0c] border border-[#1f2026] rounded-lg px-4 py-3 text-2xl font-bold text-primary-container focus:border-primary-container outline-none text-center"
-                  />
-                </div>
-                <div>
-                  <label className="block font-mono text-xs text-on-surface-variant uppercase tracking-widest mb-2">Bar Weight (kg)</label>
-                  <input 
-                    type="number" 
-                    value={barWeight}
-                    onChange={(e) => setBarWeight(Number(e.target.value))}
-                    className="w-full bg-[#0a0a0c] border border-[#1f2026] rounded-lg px-4 py-3 text-2xl font-bold text-on-surface focus:border-primary-container outline-none text-center"
-                  />
-                </div>
-              </div>
               
               <div className="bg-surface-container-low p-4 rounded-xl text-center">
                 <div className="font-mono text-[10px] text-outline uppercase tracking-widest mb-4">Plates per side</div>
@@ -570,6 +763,57 @@ export default function OSGymPage() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Templates Modal */}
+      {isTemplatesModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#131315] border border-[#1f2026] rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-[#1f2026] flex justify-between items-center shrink-0">
+              <h2 className="font-display text-2xl font-bold text-on-surface">Workout Templates</h2>
+              <button onClick={() => setIsTemplatesModalOpen(false)} className="text-outline hover:text-error transition-colors">
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto space-y-4">
+              <button
+                onClick={handleSaveTemplate}
+                className="w-full py-3 mb-4 bg-primary-container text-on-primary-container rounded-lg font-mono text-xs uppercase tracking-widest font-bold hover:brightness-110 flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> Save Current Routine As Template
+              </button>
+
+              <h3 className="font-mono text-xs text-on-surface-variant uppercase tracking-widest border-b border-outline-variant pb-2">Saved Templates</h3>
+              {templates.length === 0 ? (
+                <p className="text-on-surface-variant text-sm font-mono py-4 text-center">No templates saved yet.</p>
+              ) : (
+                templates.map((t) => (
+                  <div key={t.id} className="bg-surface-container border border-outline-variant p-4 rounded-lg flex flex-col gap-3">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-display font-bold text-on-surface">{t.name}</h4>
+                      <span className="text-[10px] text-on-surface-variant font-mono">{new Date(t.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div className="text-xs text-on-surface-variant space-y-1">
+                      {t.gym_workout_template_exercises?.map((te: any) => (
+                        <div key={te.id} className="flex justify-between">
+                          <span>{te.order_index}. {te.name}</span>
+                          <span className="font-mono opacity-60">{te.sets_reps_string}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleLoadTemplate(t.id)}
+                      className="mt-2 py-2 w-full border border-secondary-container text-secondary-container rounded font-mono text-xs uppercase tracking-widest hover:bg-secondary-container/10 transition-colors"
+                    >
+                      Load Template
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

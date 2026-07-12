@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown, ChevronRight, ExternalLink, CheckSquare, Square, FolderGit2, BookOpen, Plus, Trash2, Edit2, Save, X } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronRight, ExternalLink, CheckSquare, Square, FolderGit2, BookOpen, Plus, Trash2, Edit2, Save, X, Clock, Sparkles } from "lucide-react";
 import { 
   getStudyDomainData, 
   createStudyTopic, 
@@ -13,11 +13,14 @@ import {
   deleteStudySubtopic, 
   createStudyProject, 
   updateStudyProject, 
-  deleteStudyProject 
+  deleteStudyProject,
+  getLeetCodeCountToday,
+  updateLeetCodeCount,
+  importCurriculumWithAI
 } from "@/lib/actions/study";
 
 // --- Types ---
-type Subtopic = { id: string; title: string; is_completed: boolean; topic_id: string; created_at: string };
+type Subtopic = { id: string; title: string; is_completed: boolean; topic_id: string; created_at: string; };
 type Topic = { 
   id: string; 
   title: string; 
@@ -43,12 +46,18 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
   const [data, setData] = useState<{topics: Topic[], projects: Project[]}>({ topics: [], projects: [] });
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
 
+  const [leetcodeCount, setLeetcodeCount] = useState(0);
+
   // Modals state
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [topicForm, setTopicForm] = useState<{id?: string, title: string, sourceName: string, sourceUrl: string}>({ title: '', sourceName: '', sourceUrl: '' });
   
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [projectForm, setProjectForm] = useState<{id?: string, title: string, description: string, status: string, githubUrl: string, notes: string}>({ title: '', description: '', status: 'Planning', githubUrl: '', notes: '' });
+
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [syllabusText, setSyllabusText] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
 
   // Inline forms
   const [newSubtopicTitle, setNewSubtopicTitle] = useState("");
@@ -65,7 +74,19 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
     if (isInitial) setLoading(true);
     const domainData = await getStudyDomainData(domainKey);
     setData(domainData);
+    if (domainKey === 'dsa') {
+      const today = new Date().toISOString().split('T')[0];
+      const count = await getLeetCodeCountToday(today);
+      setLeetcodeCount(count);
+    }
     if (isInitial) setLoading(false);
+  };
+
+  const handleUpdateLeetCode = async (increment: number) => {
+    const newCount = Math.max(0, leetcodeCount + increment);
+    setLeetcodeCount(newCount);
+    const today = new Date().toISOString().split('T')[0];
+    await updateLeetCodeCount(today, newCount);
   };
 
   // --- Topic Handlers ---
@@ -97,6 +118,22 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
     setIsTopicModalOpen(true);
   };
 
+  const handleImportCurriculum = async () => {
+    if (!syllabusText.trim()) return;
+    setIsImporting(true);
+    try {
+      await importCurriculumWithAI(domainKey, syllabusText);
+      setSyllabusText("");
+      setIsImportModalOpen(false);
+      loadData();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to import syllabus.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   // --- Subtopic Handlers ---
   const handleToggleSubtopic = async (id: string, currentStatus: boolean) => {
     // Optimistic UI
@@ -122,6 +159,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
     await deleteStudySubtopic(id);
     loadData();
   };
+
 
   // --- Notes Handler ---
   const handleNotesChange = (topicId: string, newNotes: string) => {
@@ -207,17 +245,36 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
       <div className="relative z-10 max-w-[1200px] mx-auto space-y-8 pb-20">
         
         {/* Header */}
-        <header className="flex items-center gap-4 border-b border-card-border pb-6">
-          <button 
-            onClick={() => router.push('/study')}
-            className="p-2 hover:bg-surface-variant rounded-full transition-colors text-on-surface-variant hover:text-on-surface"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <div>
-            <h1 className="font-display text-4xl text-foreground font-bold">{getDomainTitle()} <span className="text-primary-container font-mono text-sm ml-2">_NEXUS</span></h1>
-            <p className="font-mono text-xs text-on-surface-variant uppercase tracking-widest mt-2">Track topics, projects, and progression</p>
+        <header className="flex items-center gap-4 border-b border-card-border pb-6 justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => router.push('/study')}
+              className="p-2 hover:bg-surface-variant rounded-full transition-colors text-on-surface-variant hover:text-on-surface"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <div>
+              <h1 className="font-display text-4xl text-foreground font-bold">{getDomainTitle()} <span className="text-primary-container font-mono text-sm ml-2">_NEXUS</span></h1>
+              <p className="font-mono text-xs text-on-surface-variant uppercase tracking-widest mt-2">Track topics, projects, and progression</p>
+            </div>
           </div>
+          
+          {domainKey === 'dsa' && (
+            <div className="bg-surface-container border border-card-border rounded-xl px-4 py-2 flex items-center gap-4 shadow-sm">
+              <div>
+                <span className="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest block">LeetCode Today</span>
+                <span className="font-display text-xl font-bold text-primary-container leading-none">{leetcodeCount} <span className="text-sm font-normal text-on-surface-variant">solved</span></span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <button onClick={() => handleUpdateLeetCode(1)} className="w-6 h-6 bg-surface-variant hover:bg-primary-container hover:text-on-primary-container rounded flex items-center justify-center transition-colors text-on-surface-variant">
+                  <Plus className="w-3 h-3" />
+                </button>
+                <button onClick={() => handleUpdateLeetCode(-1)} className="w-6 h-6 bg-surface-variant hover:bg-error hover:text-error-container rounded flex items-center justify-center transition-colors text-on-surface-variant">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4"></path></svg>
+                </button>
+              </div>
+            </div>
+          )}
         </header>
 
         {loading ? (
@@ -228,15 +285,22 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             {/* Main Content: Topics */}
-            <div className={`space-y-6 ${domainKey === 'dsa' ? 'lg:col-span-3 max-w-4xl mx-auto w-full' : 'lg:col-span-2'}`}>
+            <div className="space-y-6 lg:col-span-2">
+
+
               <div className="flex justify-between items-end mb-2">
                 <h2 className="font-display text-2xl font-bold flex items-center gap-2">
                   <BookOpen className="w-6 h-6 text-primary-container" />
                   Curriculum
                 </h2>
-                <button onClick={openNewTopic} className="text-xs font-mono uppercase tracking-widest text-primary-container hover:text-primary transition-colors flex items-center gap-1">
-                  <Plus className="w-3 h-3" /> Add Topic
-                </button>
+                <div className="flex items-center gap-4">
+                  <button onClick={() => setIsImportModalOpen(true)} className="text-xs font-mono uppercase tracking-widest text-primary-container hover:text-primary transition-colors flex items-center gap-1 group">
+                    <Sparkles className="w-3 h-3 group-hover:animate-pulse" /> AI Import
+                  </button>
+                  <button onClick={openNewTopic} className="text-xs font-mono uppercase tracking-widest text-primary-container hover:text-primary transition-colors flex items-center gap-1">
+                    <Plus className="w-3 h-3" /> Add Topic
+                  </button>
+                </div>
               </div>
               
               <div className="space-y-4">
@@ -373,9 +437,12 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
               </div>
             </div>
 
-            {/* Right Sidebar: Projects (Hidden for DSA) */}
-            {domainKey !== 'dsa' && (
-              <div className="space-y-6">
+            {/* Right Sidebar: Due for Review & Projects */}
+            <div className="space-y-6 lg:col-span-1">
+              
+
+              {domainKey !== 'dsa' && (
+                <div className="space-y-6">
                 <div className="flex justify-between items-end mb-2">
                   <h2 className="font-display text-2xl font-bold flex items-center gap-2">
                     <FolderGit2 className="w-6 h-6 text-secondary-container" />
@@ -439,6 +506,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
               </div>
             )}
             
+            </div>
           </div>
         )}
       </div>
@@ -545,6 +613,53 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
             <div className="flex justify-end gap-2 mt-6">
               <button onClick={() => setIsProjectModalOpen(false)} className="px-4 py-2 rounded text-sm text-on-surface-variant hover:bg-surface-variant transition-colors">Cancel</button>
               <button onClick={handleSaveProject} className="px-4 py-2 rounded text-sm bg-secondary-container text-on-secondary-container hover:bg-secondary transition-colors font-medium">Save Project</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* AI Import Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-surface border border-card-border rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden glass-panel">
+            <div className="p-4 border-b border-card-border flex justify-between items-center bg-primary-container/10">
+              <h3 className="font-display text-xl font-bold flex items-center gap-2 text-primary-container">
+                <Sparkles className="w-5 h-5" />
+                AI Curriculum Import
+              </h3>
+              <button onClick={() => !isImporting && setIsImportModalOpen(false)} className="text-on-surface-variant hover:text-foreground transition-colors p-1" disabled={isImporting}><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-on-surface-variant">Paste your syllabus, course outline, or learning goals here. The AI will parse it into structured topics and subtopics.</p>
+              <div>
+                <textarea
+                  value={syllabusText}
+                  onChange={e => setSyllabusText(e.target.value)}
+                  className="w-full bg-surface-container-lowest border border-primary-container/30 rounded p-3 text-sm focus:border-primary-container outline-none resize-none h-64 custom-scrollbar"
+                  placeholder="e.g. Week 1: Introduction to Data Structures...\n- Arrays\n- Linked Lists..."
+                  disabled={isImporting}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 p-4 border-t border-card-border">
+              <button onClick={() => setIsImportModalOpen(false)} className="px-4 py-2 rounded text-sm text-on-surface-variant hover:bg-surface-variant transition-colors" disabled={isImporting}>Cancel</button>
+              <button 
+                onClick={handleImportCurriculum} 
+                className="px-6 py-2 rounded text-sm bg-primary-container text-on-primary-container hover:bg-primary transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isImporting || !syllabusText.trim()}
+              >
+                {isImporting ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-on-primary-container border-t-transparent rounded-full"></div>
+                    Parsing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" /> Import Curriculum
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

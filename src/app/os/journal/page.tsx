@@ -27,6 +27,8 @@ export default function OSJournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
   
   const [saveStatus, setSaveStatus] = useState<"Saved" | "Saving..." | "Unsaved">("Saved");
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -168,6 +170,11 @@ export default function OSJournalPage() {
     );
   }
 
+  const filteredEntries = entries.filter((e) => 
+    e.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (e.body && e.body.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   return (
     <div className="flex h-full w-full relative z-10 bg-background overflow-hidden animate-in fade-in duration-500">
       {/* Abstract Background Glow */}
@@ -187,9 +194,9 @@ export default function OSJournalPage() {
 
         {/* List */}
         <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar">
-          {entries.length === 0 ? (
+          {filteredEntries.length === 0 ? (
             <div className="text-on-surface-variant p-4 text-center text-sm font-mono">No journal entries found.</div>
-          ) : entries.map((entry) => {
+          ) : filteredEntries.map((entry) => {
             const isActive = entry.id === activeEntryId;
             const dateObj = new Date(entry.date);
             const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
@@ -241,6 +248,8 @@ export default function OSJournalPage() {
               type="text"
               className="w-full bg-surface-container-lowest border-b border-outline-variant focus:border-primary-container focus:outline-none focus:ring-0 pl-10 pr-4 py-2 font-mono text-sm text-primary transition-colors placeholder:text-outline bg-transparent"
               placeholder="Query timeline..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
             <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-primary-container transition-all duration-300 group-focus-within:w-full neon-glow"></div>
           </div>

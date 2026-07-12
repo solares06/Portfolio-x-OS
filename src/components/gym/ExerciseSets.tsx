@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { updateSetLogs } from "@/lib/actions/gym";
+import { updateSetLogs, logExercisePR } from "@/lib/actions/gym";
 
 interface LogEntry {
   id: number;
@@ -17,8 +17,17 @@ interface ExerciseSetInput {
   logs?: LogEntry[];
 }
 
-export default function ExerciseSets({ exerciseSet }: { exerciseSet: ExerciseSetInput }) {
+export default function ExerciseSets({ exerciseName, exerciseSet }: { exerciseName?: string, exerciseSet: ExerciseSetInput }) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [restSeconds, setRestSeconds] = useState(0);
+  const [prAchieved, setPrAchieved] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (restSeconds > 0) {
+      const timer = setInterval(() => setRestSeconds(prev => prev - 1), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [restSeconds]);
 
   useEffect(() => {
     if (exerciseSet.logs && exerciseSet.logs.length > 0) {
@@ -41,8 +50,27 @@ export default function ExerciseSets({ exerciseSet }: { exerciseSet: ExerciseSet
 
   const handleSave = async (index: number) => {
     const newLogs = [...logs];
-    newLogs[index].completed = !newLogs[index].completed;
+    const isNowCompleted = !newLogs[index].completed;
+    newLogs[index].completed = isNowCompleted;
     setLogs(newLogs);
+    
+    // Start 90s rest timer if just completed
+    if (isNowCompleted) {
+      setRestSeconds(90);
+      
+      // Check PR
+      if (exerciseName && newLogs[index].kg && newLogs[index].reps) {
+        try {
+          const { isNewPR } = await logExercisePR(exerciseName, parseFloat(newLogs[index].kg), parseInt(newLogs[index].reps, 10));
+          if (isNewPR) {
+            setPrAchieved(index);
+          }
+        } catch (e) {
+          console.error("PR tracking failed", e);
+        }
+      }
+    }
+    
     try {
       await updateSetLogs(exerciseSet.id, newLogs);
     } catch (err) {
@@ -79,7 +107,10 @@ export default function ExerciseSets({ exerciseSet }: { exerciseSet: ExerciseSet
 
       {logs.map((log, index) => (
         <div key={log.id} className={`grid grid-cols-12 gap-2 items-center px-2 py-1.5 rounded-lg ${log.completed ? 'bg-primary-container/5' : ''}`}>
-          <div className="col-span-1 text-center">
+          <div className="col-span-1 text-center relative">
+            {prAchieved === index && (
+              <span className="absolute -top-3 -left-2 text-[8px] bg-tertiary-container text-on-tertiary-container px-1 rounded uppercase tracking-wider font-bold z-10 animate-pulse shadow-sm border border-tertiary-container">PR!</span>
+            )}
             <span className={`w-5 h-5 inline-flex items-center justify-center rounded text-xs font-mono font-bold ${log.completed ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container-high text-on-surface-variant'}`}>
               {index + 1}
             </span>
@@ -134,13 +165,19 @@ export default function ExerciseSets({ exerciseSet }: { exerciseSet: ExerciseSet
         </div>
       ))}
       
-      <div className="pt-2 text-center">
+      <div className="pt-2 text-center flex items-center justify-between">
         <button 
           onClick={(e) => { e.stopPropagation(); handleAddSet(); }}
           className="text-[10px] uppercase font-mono tracking-widest text-outline hover:text-primary-container transition-colors"
         >
           + Add Set
         </button>
+        {restSeconds > 0 && (
+          <div className="text-xs font-mono text-primary-container animate-pulse flex items-center gap-2">
+            <span>Rest Timer:</span>
+            <span>{Math.floor(restSeconds / 60)}:{(restSeconds % 60).toString().padStart(2, '0')}</span>
+          </div>
+        )}
       </div>
     </div>
   );

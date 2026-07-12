@@ -57,10 +57,10 @@ export function Hero() {
           <div className="space-y-8">
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
-                href="/projects"
+                href="/blog"
                 className="inline-flex items-center justify-center px-8 py-3.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
               >
-                View Projects
+                Read Blog
               </Link>
               <Link
                 href="/about"
