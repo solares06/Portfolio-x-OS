@@ -17,10 +17,12 @@ export async function middleware(request: NextRequest) {
   if (isRootPath) {
     initialResponse = NextResponse.next();
   } else if (isOSSubdomain) {
-    // Rewrite os.domain.com/projects to /os/projects
-    // If the user directly accesses /os via path (before they have a custom domain), don't double rewrite
-    const targetPath = pathname.startsWith("/os") ? pathname : `/os${pathname}`;
-    initialResponse = NextResponse.rewrite(new URL(targetPath, request.url));
+    // If the user directly accesses /os via path, don't rewrite to avoid breaking Next.js Server Actions POST requests
+    if (pathname.startsWith("/os")) {
+      initialResponse = NextResponse.next();
+    } else {
+      initialResponse = NextResponse.rewrite(new URL(`/os${pathname}`, request.url));
+    }
   } else {
     // Rewrite domain.com/about to /public/about
     initialResponse = NextResponse.rewrite(new URL(`/public${pathname}`, request.url));
