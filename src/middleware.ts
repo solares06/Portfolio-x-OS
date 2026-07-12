@@ -5,7 +5,7 @@ export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
   const pathname = request.nextUrl.pathname;
 
-  const isOSSubdomain = host.startsWith("os.");
+  const isOSSubdomain = host.startsWith("os.") || pathname.startsWith("/os");
 
   // Keep these paths at the root, don't rewrite them
   const rootPaths = ["/login", "/auth/callback", "/api"];
@@ -18,7 +18,9 @@ export async function middleware(request: NextRequest) {
     initialResponse = NextResponse.next();
   } else if (isOSSubdomain) {
     // Rewrite os.domain.com/projects to /os/projects
-    initialResponse = NextResponse.rewrite(new URL(`/os${pathname}`, request.url));
+    // If the user directly accesses /os via path (before they have a custom domain), don't double rewrite
+    const targetPath = pathname.startsWith("/os") ? pathname : `/os${pathname}`;
+    initialResponse = NextResponse.rewrite(new URL(targetPath, request.url));
   } else {
     // Rewrite domain.com/about to /public/about
     initialResponse = NextResponse.rewrite(new URL(`/public${pathname}`, request.url));
