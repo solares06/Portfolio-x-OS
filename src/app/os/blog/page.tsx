@@ -24,7 +24,7 @@ export default async function OSBlogPage() {
       {/* Stats row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-card border border-card-border rounded-theme p-6 glass-panel flex items-center gap-4">
-          <div className="p-3 bg-primary-container/20 rounded-lg text-primary-container">
+          <div className="p-3 bg-primary-container/20 rounded-lg text-primary">
             <FileText className="w-6 h-6" />
           </div>
           <div>

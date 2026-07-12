@@ -148,7 +148,7 @@ export default function ExerciseSets({ exerciseName, exerciseSet }: { exerciseNa
                 e.stopPropagation();
                 handleSave(index);
               }}
-              className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${log.completed ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container-high text-outline hover:text-primary-container'}`}
+              className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${log.completed ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container-high text-outline hover:text-primary'}`}
             >
               ✓
             </button>
@@ -168,12 +168,12 @@ export default function ExerciseSets({ exerciseName, exerciseSet }: { exerciseNa
       <div className="pt-2 text-center flex items-center justify-between">
         <button 
           onClick={(e) => { e.stopPropagation(); handleAddSet(); }}
-          className="text-[10px] uppercase font-mono tracking-widest text-outline hover:text-primary-container transition-colors"
+          className="text-[10px] uppercase font-mono tracking-widest text-outline hover:text-primary transition-colors"
         >
           + Add Set
         </button>
         {restSeconds > 0 && (
-          <div className="text-xs font-mono text-primary-container animate-pulse flex items-center gap-2">
+          <div className="text-xs font-mono text-primary animate-pulse flex items-center gap-2">
             <span>Rest Timer:</span>
             <span>{Math.floor(restSeconds / 60)}:{(restSeconds % 60).toString().padStart(2, '0')}</span>
           </div>

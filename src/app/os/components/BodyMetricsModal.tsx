@@ -59,7 +59,7 @@ export default function BodyMetricsModal({ isOpen, onClose, onSave, initialData 
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Body Metrics">
       <form onSubmit={handleSubmit} className="space-y-4">
         
-        <h4 className="font-display text-sm text-primary-container border-b border-card-border pb-1 mb-2">Weight</h4>
+        <h4 className="font-display text-sm text-primary border-b border-card-border pb-1 mb-2">Weight</h4>
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block font-mono text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">Value</label>
@@ -75,7 +75,7 @@ export default function BodyMetricsModal({ isOpen, onClose, onSave, initialData 
           </div>
         </div>
 
-        <h4 className="font-display text-sm text-primary-container border-b border-card-border pb-1 mb-2 mt-4">Body Fat</h4>
+        <h4 className="font-display text-sm text-primary border-b border-card-border pb-1 mb-2 mt-4">Body Fat</h4>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block font-mono text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">Value</label>

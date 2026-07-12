@@ -140,7 +140,7 @@ export default function StudyConsistencyTracker() {
           </p>
         </div>
         <div className="text-right">
-          <div className="flex items-center gap-1 justify-end text-primary-container font-bold">
+          <div className="flex items-center gap-1 justify-end text-primary font-bold">
             <Flame className="w-4 h-4" />
             <span>{streak} Day Streak</span>
           </div>
@@ -191,7 +191,7 @@ export default function StudyConsistencyTracker() {
                           : day.isCompleted
                             ? "bg-primary-container shadow-[0_0_8px_rgba(0,242,255,0.2)] cursor-pointer hover:brightness-110 active:scale-95 text-on-primary-container font-bold"
                             : day.isToday
-                              ? "bg-primary-container/10 border border-primary-container border-dashed hover:bg-primary-container/30 cursor-pointer text-primary-container"
+                              ? "bg-primary-container/10 border border-primary-container border-dashed hover:bg-primary-container/30 cursor-pointer text-primary"
                               : "bg-surface-container-high hover:bg-surface-variant cursor-pointer text-on-surface-variant"
                       }`}
                       title={day.dateStr}
@@ -202,7 +202,7 @@ export default function StudyConsistencyTracker() {
                 })}
               </div>
               <div className="w-8 flex justify-end">
-                {completedWeekdays === 7 && <CheckCircle2 className="w-4 h-4 text-primary-container" />}
+                {completedWeekdays === 7 && <CheckCircle2 className="w-4 h-4 text-primary" />}
                 {completedWeekdays > 0 && completedWeekdays < 7 && <div className="text-[10px] font-mono text-on-surface-variant">{completedWeekdays}/7</div>}
               </div>
             </div>

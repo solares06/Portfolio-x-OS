@@ -57,7 +57,8 @@ export function TaskModal({ isOpen, onClose, onSave, initialData }: TaskModalPro
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all [color-scheme:dark]"
+            className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all"
+            style={{ colorScheme: "var(--color-scheme)" }}
           />
         </div>
         <div className="flex justify-end space-x-2 pt-2">
@@ -71,7 +72,7 @@ export function TaskModal({ isOpen, onClose, onSave, initialData }: TaskModalPro
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 bg-primary-container/20 border border-primary-container text-primary-container hover:bg-primary-container hover:text-on-primary-container rounded transition-colors font-mono text-xs uppercase tracking-widest flex items-center justify-center min-w-[100px]"
+            className="px-4 py-2 bg-primary-container/20 border border-primary-container text-primary hover:bg-primary-container hover:text-on-primary-container rounded transition-colors font-mono text-xs uppercase tracking-widest flex items-center justify-center min-w-[100px]"
           >
             {loading ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span> : "Save Task"}
           </button>

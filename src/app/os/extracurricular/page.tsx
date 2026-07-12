@@ -147,14 +147,14 @@ export default function OSExtracurricularPage() {
   };
   const getDirectiveTextColor = (color: string) => {
     switch (color) {
-      case 'primary': return 'text-primary-container';
+      case 'primary': return 'text-primary';
       case 'tertiary': return 'text-tertiary-container';
       default: return 'text-on-surface-variant';
     }
   };
   const getTrendColor = (color: string) => {
     switch (color) {
-      case 'primary': return 'text-primary-container';
+      case 'primary': return 'text-primary';
       case 'tertiary': return 'text-tertiary-container';
       default: return 'text-outline';
     }
@@ -185,7 +185,7 @@ export default function OSExtracurricularPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="font-mono text-[10px] text-primary-container border border-primary-container/30 bg-primary-container/10 px-2 py-1 rounded uppercase tracking-widest font-bold">MODULE: E-CELL</span>
+              <span className="font-mono text-[10px] text-primary border border-primary-container/30 bg-primary-container/10 px-2 py-1 rounded uppercase tracking-widest font-bold">MODULE: E-CELL</span>
               <div className="w-2 h-2 rounded-full bg-primary-container animate-pulse"></div>
               <span className="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">SYS.STATE: ACTIVE</span>
             </div>
@@ -199,8 +199,8 @@ export default function OSExtracurricularPage() {
           {/* Active Directives */}
           <div className="col-span-4 lg:col-span-4 glass-panel rounded-xl p-6 flex flex-col hover:border-primary-container hover:shadow-[0_0_12px_rgba(0,242,255,0.3)] transition-all relative overflow-hidden group">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><AlertCircle className="w-6 h-6 text-primary-container" /> Active Directives</h3>
-              <button onClick={() => { setEditingDirective(null); setIsDirectiveModalOpen(true); }} className="text-on-surface-variant hover:text-primary-container transition-colors"><Plus className="w-5 h-5" /></button>
+              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><AlertCircle className="w-6 h-6 text-primary" /> Active Directives</h3>
+              <button onClick={() => { setEditingDirective(null); setIsDirectiveModalOpen(true); }} className="text-on-surface-variant hover:text-primary transition-colors"><Plus className="w-5 h-5" /></button>
             </div>
             <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-[250px] max-h-[350px]">
               {loading ? <div className="text-on-surface-variant font-mono text-sm text-center py-4">Loading...</div> : 
@@ -210,7 +210,7 @@ export default function OSExtracurricularPage() {
                   <div className="flex justify-between items-start mb-1">
                     <span className={`font-mono text-[10px] uppercase tracking-widest font-bold ${getDirectiveTextColor(dir.color)}`}>{dir.typeLabel}</span>
                     <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => { setEditingDirective(dir); setIsDirectiveModalOpen(true); }} className="p-1 hover:text-primary-container text-on-surface-variant"><Edit2 className="w-3 h-3" /></button>
+                      <button onClick={() => { setEditingDirective(dir); setIsDirectiveModalOpen(true); }} className="p-1 hover:text-primary text-on-surface-variant"><Edit2 className="w-3 h-3" /></button>
                       <button onClick={() => setConfirmModal({ isOpen: true, type: 'directive', id: dir.id, title: dir.title })} className="p-1 hover:text-error text-on-surface-variant"><Trash2 className="w-3 h-3" /></button>
                     </div>
                   </div>
@@ -224,14 +224,14 @@ export default function OSExtracurricularPage() {
           {/* Sponsorship Telemetry */}
           <div className="col-span-4 md:col-span-8 lg:col-span-8 glass-panel rounded-xl p-6 flex flex-col hover:border-primary-container hover:shadow-[0_0_12px_rgba(0,242,255,0.3)] transition-all">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><Activity className="w-6 h-6 text-primary-container" /> Sponsorship Telemetry</h3>
-              <button onClick={() => setIsStatsModalOpen(true)} className="text-on-surface-variant hover:text-primary-container transition-colors"><Edit2 className="w-4 h-4" /></button>
+              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><Activity className="w-6 h-6 text-primary" /> Sponsorship Telemetry</h3>
+              <button onClick={() => setIsStatsModalOpen(true)} className="text-on-surface-variant hover:text-primary transition-colors"><Edit2 className="w-4 h-4" /></button>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {stats.map(stat => (
                 <div key={stat.id} className="bg-surface-container-high p-4 rounded-lg border border-outline-variant hover:border-primary-container/50 transition-colors">
                   <span className="font-mono text-[10px] text-on-surface-variant block mb-1 uppercase tracking-widest">{stat.label}</span>
-                  <span className={`font-display text-3xl font-bold block ${stat.id === 'stat1' ? 'text-primary-container' : 'text-on-surface'}`}>{stat.value}</span>
+                  <span className={`font-display text-3xl font-bold block ${stat.id === 'stat1' ? 'text-primary' : 'text-on-surface'}`}>{stat.value}</span>
                   {stat.progress !== undefined && stat.progressColor && (
                     <div className="w-full bg-surface-container-highest h-1 mt-3 rounded overflow-hidden">
                       <div className={`h-full rounded ${getProgressBgColor(stat.progressColor)}`} style={{ width: `${stat.progress}%` }}></div>
@@ -246,8 +246,8 @@ export default function OSExtracurricularPage() {
           {/* Core Operatives */}
           <div className="col-span-4 md:col-span-4 lg:col-span-6 glass-panel rounded-xl p-6 flex flex-col hover:border-primary-container hover:shadow-[0_0_12px_rgba(0,242,255,0.3)] transition-all">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><Users className="w-6 h-6 text-primary-container" /> Core Operatives</h3>
-              <button onClick={() => { setEditingTeamMember(null); setIsTeamModalOpen(true); }} className="text-on-surface-variant hover:text-primary-container transition-colors"><Plus className="w-5 h-5" /></button>
+              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><Users className="w-6 h-6 text-primary" /> Core Operatives</h3>
+              <button onClick={() => { setEditingTeamMember(null); setIsTeamModalOpen(true); }} className="text-on-surface-variant hover:text-primary transition-colors"><Plus className="w-5 h-5" /></button>
             </div>
             <div className="flex flex-col gap-3 flex-1 overflow-y-auto max-h-[250px] custom-scrollbar">
               {team.map(member => (
@@ -260,7 +260,7 @@ export default function OSExtracurricularPage() {
                     <p className="font-mono text-xs text-on-surface-variant truncate">{member.role}</p>
                   </div>
                   <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => { setEditingTeamMember(member); setIsTeamModalOpen(true); }} className="p-1.5 hover:bg-primary-container/20 text-on-surface-variant hover:text-primary-container rounded transition-colors"><Edit2 className="w-3 h-3" /></button>
+                    <button onClick={() => { setEditingTeamMember(member); setIsTeamModalOpen(true); }} className="p-1.5 hover:bg-primary-container/20 text-on-surface-variant hover:text-primary rounded transition-colors"><Edit2 className="w-3 h-3" /></button>
                     <button onClick={() => setConfirmModal({ isOpen: true, type: 'team', id: member.id, title: member.name })} className="p-1.5 hover:bg-error/20 text-on-surface-variant hover:text-error rounded transition-colors"><Trash2 className="w-3 h-3" /></button>
                   </div>
                 </div>
@@ -271,10 +271,10 @@ export default function OSExtracurricularPage() {
           {/* Memory Databank (Archive) */}
           <div className="col-span-4 md:col-span-4 lg:col-span-6 glass-panel rounded-xl p-6 flex flex-col hover:border-primary-container hover:shadow-[0_0_12px_rgba(0,242,255,0.3)] transition-all">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><ImageIcon className="w-6 h-6 text-primary-container" /> Memory Databank</h3>
+              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><ImageIcon className="w-6 h-6 text-primary" /> Memory Databank</h3>
               <div className="relative">
                 <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-                <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="text-on-surface-variant hover:text-primary-container transition-colors disabled:opacity-50">
+                <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="text-on-surface-variant hover:text-primary transition-colors disabled:opacity-50">
                   <Upload className="w-5 h-5" />
                 </button>
               </div>
@@ -285,7 +285,7 @@ export default function OSExtracurricularPage() {
                 <div className="relative group rounded-lg overflow-hidden border border-outline-variant h-full min-h-[150px]">
                   <Image src={archive[0].url} alt="Archive" fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                    <span className="font-mono text-[10px] text-primary-container font-bold">{archive[0].label}</span>
+                    <span className="font-mono text-[10px] text-primary font-bold">{archive[0].label}</span>
                   </div>
                 </div>
               ) : (
@@ -299,15 +299,15 @@ export default function OSExtracurricularPage() {
                   <div className="relative group rounded-lg overflow-hidden border border-outline-variant h-full">
                     <Image src={archive[1].url} alt="Archive" fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                      <span className="font-mono text-[10px] text-primary-container font-bold">{archive[1].label}</span>
+                      <span className="font-mono text-[10px] text-primary font-bold">{archive[1].label}</span>
                     </div>
                   </div>
                 )}
                 
                 {archive.length > 0 && (
                   <div className="relative group rounded-lg overflow-hidden border border-outline-variant bg-surface-container-high flex flex-col items-center justify-center cursor-pointer hover:border-primary-container hover:bg-surface-variant transition-colors gap-2 h-full">
-                    <LayoutGrid className="w-8 h-8 text-on-surface-variant group-hover:text-primary-container transition-colors" />
-                    <span className="font-mono text-[10px] text-on-surface-variant group-hover:text-primary-container transition-colors uppercase tracking-widest font-bold">View All ({archive.length})</span>
+                    <LayoutGrid className="w-8 h-8 text-on-surface-variant group-hover:text-primary transition-colors" />
+                    <span className="font-mono text-[10px] text-on-surface-variant group-hover:text-primary transition-colors uppercase tracking-widest font-bold">View All ({archive.length})</span>
                   </div>
                 )}
               </div>
@@ -317,8 +317,8 @@ export default function OSExtracurricularPage() {
           {/* Sponsor Pipeline */}
           <div className="col-span-4 md:col-span-8 lg:col-span-8 glass-panel rounded-xl p-6 flex flex-col hover:border-primary-container hover:shadow-[0_0_12px_rgba(0,242,255,0.3)] transition-all">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><Briefcase className="w-6 h-6 text-primary-container" /> Sponsor Pipeline</h3>
-              <button onClick={() => { setEditingSponsor(null); setIsSponsorModalOpen(true); }} className="text-on-surface-variant hover:text-primary-container transition-colors"><Plus className="w-5 h-5" /></button>
+              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><Briefcase className="w-6 h-6 text-primary" /> Sponsor Pipeline</h3>
+              <button onClick={() => { setEditingSponsor(null); setIsSponsorModalOpen(true); }} className="text-on-surface-variant hover:text-primary transition-colors"><Plus className="w-5 h-5" /></button>
             </div>
             <div className="bg-surface-container-lowest border border-surface-variant rounded-lg overflow-hidden custom-scrollbar max-h-[300px] overflow-y-auto">
               <table className="w-full text-left font-mono text-sm">
@@ -342,10 +342,10 @@ export default function OSExtracurricularPage() {
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded text-[10px] border uppercase tracking-widest font-bold ${getStatusColor(p.status)}`}>{p.status}</span>
                       </td>
-                      <td className="px-4 py-3 text-primary-container font-bold">{p.amount ? `$${p.amount}` : '-'}</td>
+                      <td className="px-4 py-3 text-primary font-bold">{p.amount ? `$${p.amount}` : '-'}</td>
                       <td className="px-4 py-3 w-20">
                         <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => { setEditingSponsor(p); setIsSponsorModalOpen(true); }} className="p-1 hover:text-primary-container text-on-surface-variant"><Edit2 className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditingSponsor(p); setIsSponsorModalOpen(true); }} className="p-1 hover:text-primary text-on-surface-variant"><Edit2 className="w-4 h-4" /></button>
                           <button onClick={() => setConfirmModal({ isOpen: true, type: 'sponsor', id: p.id, title: p.company })} className="p-1 hover:text-error text-on-surface-variant"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
@@ -359,17 +359,17 @@ export default function OSExtracurricularPage() {
           {/* Meeting Notes */}
           <div className="col-span-4 md:col-span-4 lg:col-span-4 glass-panel rounded-xl p-6 flex flex-col hover:border-primary-container hover:shadow-[0_0_12px_rgba(0,242,255,0.3)] transition-all">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><FileText className="w-6 h-6 text-primary-container" /> Meeting Notes</h3>
-              <button onClick={() => { setEditingNote(null); setIsNoteModalOpen(true); }} className="text-on-surface-variant hover:text-primary-container transition-colors"><Plus className="w-5 h-5" /></button>
+              <h3 className="font-display text-xl text-on-surface flex items-center gap-2 font-bold"><FileText className="w-6 h-6 text-primary" /> Meeting Notes</h3>
+              <button onClick={() => { setEditingNote(null); setIsNoteModalOpen(true); }} className="text-on-surface-variant hover:text-primary transition-colors"><Plus className="w-5 h-5" /></button>
             </div>
             <div className="flex flex-col gap-3 flex-1 overflow-y-auto max-h-[300px] custom-scrollbar">
               {notes.length === 0 ? <div className="text-on-surface-variant font-mono text-sm text-center py-4">No meeting notes.</div> : 
                notes.map(note => (
                  <div key={note.id} className="bg-surface-container-high border border-outline-variant p-4 rounded-lg group hover:border-primary-container transition-colors flex flex-col">
                    <div className="flex justify-between items-start mb-2">
-                     <span className="font-mono text-[10px] text-primary-container uppercase tracking-widest">{new Date(note.date).toLocaleDateString()}</span>
+                     <span className="font-mono text-[10px] text-primary uppercase tracking-widest">{new Date(note.date).toLocaleDateString()}</span>
                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => { setEditingNote(note); setIsNoteModalOpen(true); }} className="p-1 hover:text-primary-container text-on-surface-variant"><Edit2 className="w-3 h-3" /></button>
+                      <button onClick={() => { setEditingNote(note); setIsNoteModalOpen(true); }} className="p-1 hover:text-primary text-on-surface-variant"><Edit2 className="w-3 h-3" /></button>
                       <button onClick={() => setConfirmModal({ isOpen: true, type: 'note', id: note.id, title: note.title })} className="p-1 hover:text-error text-on-surface-variant"><Trash2 className="w-3 h-3" /></button>
                     </div>
                    </div>

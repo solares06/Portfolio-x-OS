@@ -86,7 +86,8 @@ export default function SponsorModal({ isOpen, onClose, onSave, initialData }: S
             <select
               value={status}
               onChange={e => setStatus(e.target.value as SponsorData["status"])}
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none [color-scheme:dark]"
+              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none"
+              style={{ colorScheme: "var(--color-scheme)" }}
             >
               <option value="Lead">Lead</option>
               <option value="Contacted">Contacted</option>

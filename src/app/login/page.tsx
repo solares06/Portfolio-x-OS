@@ -20,7 +20,7 @@ export default function LoginPage({
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
-            <span className="font-mono text-[10px] text-primary-container border border-primary-container/30 bg-primary-container/10 px-2 py-1 rounded uppercase tracking-widest font-bold">
+            <span className="font-mono text-[10px] text-primary border border-primary-container/30 bg-primary-container/10 px-2 py-1 rounded uppercase tracking-widest font-bold">
               SYSTEM AUTH
             </span>
             <div className="w-2 h-2 rounded-full bg-primary-container animate-pulse"></div>
@@ -40,7 +40,7 @@ export default function LoginPage({
 
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded bg-primary-container/10 border border-primary-container/30 flex items-center justify-center">
-              <Lock className="w-5 h-5 text-primary-container" />
+              <Lock className="w-5 h-5 text-primary" />
             </div>
             <div>
               <h2 className="font-display text-lg text-foreground font-bold">

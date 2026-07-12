@@ -83,7 +83,8 @@ export default function RecurringTransactionModal({ isOpen, onClose, onSave, ini
             <select
               value={type}
               onChange={e => setType(e.target.value as "income" | "expense")}
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none [color-scheme:dark]"
+              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none"
+              style={{ colorScheme: "var(--color-scheme)" }}
             >
               <option value="expense">Expense</option>
               <option value="income">Income</option>
@@ -96,7 +97,8 @@ export default function RecurringTransactionModal({ isOpen, onClose, onSave, ini
             <select
               value={recurrence}
               onChange={e => setRecurrence(e.target.value as any)}
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none [color-scheme:dark]"
+              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none"
+              style={{ colorScheme: "var(--color-scheme)" }}
             >
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
@@ -143,7 +145,8 @@ export default function RecurringTransactionModal({ isOpen, onClose, onSave, ini
             required
             value={nextDate}
             onChange={e => setNextDate(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none [color-scheme:dark]"
+            className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none"
+            style={{ colorScheme: "var(--color-scheme)" }}
           />
         </div>
         <div>

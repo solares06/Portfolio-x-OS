@@ -186,7 +186,7 @@ export default function OSJournalPage() {
         <div className="p-4 border-b border-surface-container flex items-center justify-between">
           <h2 className="font-display text-xl text-primary font-bold tracking-tight">Timeline</h2>
           <div className="flex items-center gap-2 text-on-surface-variant">
-            <button className="hover:text-primary-container transition-colors" onClick={createNewEntry}>
+            <button className="hover:text-primary transition-colors" onClick={createNewEntry}>
               <Plus className="w-5 h-5" />
             </button>
           </div>
@@ -214,7 +214,7 @@ export default function OSJournalPage() {
                 <div className="flex items-center justify-between mb-1">
                   <span
                     className={`font-mono text-xs uppercase ${
-                      isActive ? "text-primary-container" : "text-on-surface-variant"
+                      isActive ? "text-primary" : "text-on-surface-variant"
                     }`}
                   >
                     {dateStr}
@@ -243,7 +243,7 @@ export default function OSJournalPage() {
         {/* Global Search / Filter */}
         <div className="p-4 border-t border-surface-container mt-auto">
           <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant group-focus-within:text-primary-container transition-colors" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant group-focus-within:text-primary transition-colors" />
             <input
               type="text"
               className="w-full bg-surface-container-lowest border-b border-outline-variant focus:border-primary-container focus:outline-none focus:ring-0 pl-10 pr-4 py-2 font-mono text-sm text-primary transition-colors placeholder:text-outline bg-transparent"
@@ -283,7 +283,7 @@ export default function OSJournalPage() {
 
           <div className="max-w-4xl w-full mx-auto px-10 pb-10 pt-4 flex flex-col flex-1">
             {/* Date Header */}
-            <div className="font-mono text-xs text-primary-container tracking-widest mb-4 flex items-center gap-2 uppercase">
+            <div className="font-mono text-xs text-primary tracking-widest mb-4 flex items-center gap-2 uppercase">
               <Calendar className="w-4 h-4" />
               {new Date(activeEntry.date).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
             </div>
@@ -299,7 +299,7 @@ export default function OSJournalPage() {
                     onClick={() => handleMoodChange(m.value)}
                     className={`px-3 py-1.5 rounded-full font-mono text-xs uppercase tracking-wider border transition-colors ${
                       activeEntry.mood === m.value
-                        ? "bg-primary-container/20 border-primary-container text-primary-container"
+                        ? "bg-primary-container/20 border-primary-container text-primary"
                         : "bg-surface-container-low border-outline-variant text-on-surface-variant hover:border-primary-container/50"
                     }`}
                   >
@@ -338,7 +338,7 @@ export default function OSJournalPage() {
                     onChange={handlePhotoUpload}
                     disabled={uploading}
                   />
-                  <button className="flex items-center gap-2 bg-surface-container-high hover:bg-primary-container/20 border border-outline-variant hover:border-primary-container transition-all px-4 py-2 rounded text-sm font-mono text-on-surface-variant hover:text-primary-container relative z-0">
+                  <button className="flex items-center gap-2 bg-surface-container-high hover:bg-primary-container/20 border border-outline-variant hover:border-primary-container transition-all px-4 py-2 rounded text-sm font-mono text-on-surface-variant hover:text-primary relative z-0">
                     <Plus className="w-4 h-4" />
                     {uploading ? "Uploading..." : "Add Photo"}
                   </button>

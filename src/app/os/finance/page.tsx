@@ -188,7 +188,7 @@ export default function OSFinancePage() {
           </div>
           <div className="bg-surface-container-low border border-surface-variant p-6 rounded-lg relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
-            <div className="flex items-center gap-3 text-on-surface-variant mb-2"><Wallet className="w-5 h-5 text-primary-container" /><h3 className="font-mono text-xs uppercase tracking-widest">Net Balance</h3></div>
+            <div className="flex items-center gap-3 text-on-surface-variant mb-2"><Wallet className="w-5 h-5 text-primary" /><h3 className="font-mono text-xs uppercase tracking-widest">Net Balance</h3></div>
             <p className="font-display text-3xl font-bold text-on-surface">${summary.net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
         </div>

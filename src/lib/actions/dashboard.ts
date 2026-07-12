@@ -102,14 +102,14 @@ export async function deleteEvent(id: string) {
   if (error) throw error;
 }
 
-export async function getTodaySummary() {
+export async function getTodaySummary(clientDayName?: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
-  const dayName = today.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+  const dayName = clientDayName || today.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
 
   // 1. Gym Workout Day
   const { data: splitDay } = await supabase
@@ -240,4 +240,100 @@ export async function getDynamicNotifications() {
   }
 
   return notifications;
+}
+
+// --- OS Profile & Vision Board ---
+
+export async function getOsProfile() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from("os_profile")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+  return data;
+}
+
+export async function updateOsProfile(avatarUrl: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("os_profile")
+    .upsert({ user_id: user.id, avatar_url: avatarUrl });
+  
+  if (error) throw error;
+}
+
+export async function getVisionBoardImages() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data } = await supabase
+    .from("vision_board")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+  return data || [];
+}
+
+export async function uploadVisionBoardImage(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const file = formData.get("file") as File;
+  if (!file) throw new Error("No file uploaded");
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `vision_${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+  const filePath = `${user.id}/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("portfolio-media")
+    .upload(filePath, file);
+
+  if (uploadError) {
+    console.error("Upload error:", uploadError);
+    throw new Error("Failed to upload image");
+  }
+
+  const { data } = supabase.storage
+    .from("portfolio-media")
+    .getPublicUrl(filePath);
+
+  const { error: dbError } = await supabase
+    .from("vision_board")
+    .insert([{ user_id: user.id, image_url: data.publicUrl }]);
+
+  if (dbError) throw dbError;
+  return data.publicUrl;
+}
+
+export async function deleteVisionBoardImage(id: string, imageUrl: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error: dbError } = await supabase
+    .from("vision_board")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (dbError) throw dbError;
+
+  // Optional: delete from storage
+  try {
+    const urlParts = imageUrl.split('/');
+    const fileName = urlParts[urlParts.length - 1];
+    await supabase.storage.from("portfolio-media").remove([`${user.id}/${fileName}`]);
+  } catch (e) {
+    console.error("Failed to delete from storage", e);
+  }
 }

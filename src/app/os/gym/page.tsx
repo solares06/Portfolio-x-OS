@@ -312,7 +312,7 @@ export default function OSGymPage() {
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center h-full space-y-6 bg-background">
         <div className="p-4 bg-primary-container/10 border border-primary-container/30 rounded-full mb-4 relative">
           <div className="absolute inset-0 bg-primary-container/20 blur-xl"></div>
-          <Play className="w-10 h-10 text-primary-container relative z-10" />
+          <Play className="w-10 h-10 text-primary relative z-10" />
         </div>
         <div>
           <h2 className="font-display text-3xl font-bold text-foreground">Initialize Gym Profile</h2>
@@ -346,7 +346,7 @@ export default function OSGymPage() {
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">
             <div className="font-display text-2xl font-black text-on-surface tracking-tight">
-              Core_OS<span className="text-primary-container">.gym</span>
+              Core_OS<span className="text-primary">.gym</span>
             </div>
           </div>
           
@@ -376,7 +376,7 @@ export default function OSGymPage() {
             <div className="glass-panel p-6 lg:p-8 rounded-xl border border-card-border">
               <div className="flex justify-between items-start mb-8">
                 <div>
-                  <span className="px-3 py-1 bg-primary-container/10 text-primary-container font-mono text-[10px] rounded-full uppercase tracking-widest font-bold mb-4 inline-block">
+                  <span className="px-3 py-1 bg-primary-container/10 text-primary font-mono text-[10px] rounded-full uppercase tracking-widest font-bold mb-4 inline-block">
                     Current Routine
                   </span>
                   <h1 className="font-display text-4xl text-on-surface font-bold">Custom Split</h1>
@@ -388,7 +388,7 @@ export default function OSGymPage() {
                     </div>
                   )}
                   <div className="text-sm text-on-surface-variant font-mono">Week {cycleInfo.currentWeek} of {cycleInfo.cycleLength}</div>
-                  <div className="text-xs text-on-surface-variant mt-1">Consistency: <span className="text-primary-container font-bold">85%</span> <span className="text-secondary-container">· 4 Wk Streak 🔥</span></div>
+                  <div className="text-xs text-on-surface-variant mt-1">Consistency: <span className="text-primary font-bold">85%</span> <span className="text-secondary-container">· 4 Wk Streak 🔥</span></div>
                 </div>
               </div>
 
@@ -407,14 +407,14 @@ export default function OSGymPage() {
                           ? 'bg-primary-container/20 border-primary-container neon-glow' 
                           : 'bg-surface-container-high border-outline-variant/30 hover:border-primary-container/50'
                       }`}>
-                        <span className={`font-bold text-lg ${isSelected ? 'text-primary-container' : 'text-on-surface'}`}>{initial}</span>
-                        <span className={`text-[10px] uppercase font-mono tracking-wider mt-1 ${isSelected ? 'text-primary-container' : 'text-on-surface-variant'}`}>
+                        <span className={`font-bold text-lg ${isSelected ? 'text-primary' : 'text-on-surface'}`}>{initial}</span>
+                        <span className={`text-[10px] uppercase font-mono tracking-wider mt-1 ${isSelected ? 'text-primary' : 'text-on-surface-variant'}`}>
                           {sDay.type}
                         </span>
                       </div>
                       <span 
                         onClick={(e) => handleTypeChange(sDay, e)}
-                        className="text-[9px] text-outline mt-2 uppercase tracking-widest cursor-pointer hover:text-primary-container transition-colors"
+                        className="text-[9px] text-outline mt-2 uppercase tracking-widest cursor-pointer hover:text-primary transition-colors"
                       >
                         edit
                       </span>
@@ -435,7 +435,7 @@ export default function OSGymPage() {
                     <span className={`px-2 py-0.5 font-mono text-[10px] rounded uppercase tracking-widest font-bold ${
                       activeSplitDay.type.toLowerCase() === 'rest' 
                         ? 'bg-surface-variant text-on-surface-variant border border-outline-variant' 
-                        : 'bg-primary-container/10 border border-primary-container/30 text-primary-container'
+                        : 'bg-primary-container/10 border border-primary-container/30 text-primary'
                     }`}>
                       {activeSplitDay.type}
                     </span>
@@ -471,7 +471,7 @@ export default function OSGymPage() {
                           {i + 1}
                         </div>
                         <div>
-                          <div className="font-body text-base font-bold text-on-surface group-hover:text-primary-container transition-colors">{ex.name}</div>
+                          <div className="font-body text-base font-bold text-on-surface group-hover:text-primary transition-colors">{ex.name}</div>
                           <div className="font-mono text-[10px] text-on-surface-variant mt-1">{ex.target || '3x10'} · {i % 2 === 0 ? 'Comfortable Heavy' : 'Moderate'}</div>
                         </div>
                       </div>
@@ -493,7 +493,7 @@ export default function OSGymPage() {
             <div className="glass-panel p-6 lg:p-8 rounded-xl border border-card-border">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
-                  <ImageIcon className="w-5 h-5 text-primary-container" />
+                  <ImageIcon className="w-5 h-5 text-primary" />
                   <h2 className="font-display text-xl text-on-surface font-bold">Growth Journey</h2>
                 </div>
                 <label className="cursor-pointer px-4 py-2 bg-surface-container-high hover:bg-surface-variant border border-outline-variant/50 rounded-full font-mono text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
@@ -540,7 +540,7 @@ export default function OSGymPage() {
               <div className="glass-panel p-6 rounded-xl border border-card-border">
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="font-display text-lg font-bold text-on-surface flex items-center gap-2">
-                    <Scale className="w-5 h-5 text-primary-container" />
+                    <Scale className="w-5 h-5 text-primary" />
                     Body Metrics
                   </h3>
                   <div className="flex gap-2">
@@ -554,7 +554,7 @@ export default function OSGymPage() {
                     </button>
                     <button
                       onClick={() => setIsMetricsOpen(true)}
-                      className="font-mono text-[10px] uppercase tracking-widest text-primary-container hover:underline"
+                      className="font-mono text-[10px] uppercase tracking-widest text-primary hover:underline"
                     >
                       Edit
                     </button>
@@ -566,7 +566,7 @@ export default function OSGymPage() {
                     <p className="font-display text-2xl font-bold text-on-surface">
                       {metrics.weight.value}{metrics.weight.unit}
                     </p>
-                    <p className="font-mono text-xs text-primary-container">{metrics.weight.delta}</p>
+                    <p className="font-mono text-xs text-primary">{metrics.weight.delta}</p>
                   </div>
                   <div>
                     <p className="font-mono text-[10px] text-outline uppercase tracking-widest">Body Fat</p>
@@ -648,8 +648,8 @@ export default function OSGymPage() {
       {/* Add Exercise Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#131315] border border-[#1f2026] rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-[#1f2026] flex justify-between items-center">
+          <div className="bg-surface-container border border-outline-variant rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-outline-variant flex justify-between items-center">
               <h2 className="font-display text-2xl font-bold text-on-surface">Add Exercise</h2>
               <button onClick={() => setIsAddModalOpen(false)} className="text-outline hover:text-error transition-colors">
                 ✕
@@ -662,7 +662,7 @@ export default function OSGymPage() {
                   type="text" 
                   value={newExercise.name}
                   onChange={(e) => setNewExercise({...newExercise, name: e.target.value})}
-                  className="w-full bg-[#0a0a0c] border border-[#1f2026] rounded-lg px-4 py-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all font-body"
+                  className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all font-body"
                   placeholder="e.g. Incline Dumbbell Press"
                 />
               </div>
@@ -673,7 +673,7 @@ export default function OSGymPage() {
                     type="text" 
                     value={newExercise.setsReps}
                     onChange={(e) => setNewExercise({...newExercise, setsReps: e.target.value})}
-                    className="w-full bg-[#0a0a0c] border border-[#1f2026] rounded-lg px-4 py-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all font-body"
+                    className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all font-body"
                     placeholder="e.g. 4x10"
                   />
                 </div>
@@ -682,7 +682,7 @@ export default function OSGymPage() {
                   <select 
                     value={newExercise.intensity}
                     onChange={(e) => setNewExercise({...newExercise, intensity: e.target.value})}
-                    className="w-full bg-[#0a0a0c] border border-[#1f2026] rounded-lg px-4 py-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all font-body"
+                    className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all font-body"
                   >
                     <option>Light</option>
                     <option>Moderate</option>
@@ -692,7 +692,7 @@ export default function OSGymPage() {
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-[#1f2026] flex justify-end gap-3 bg-[#0a0a0c]">
+            <div className="p-6 border-t border-outline-variant flex justify-end gap-3 bg-surface-container-lowest">
               <button 
                 onClick={() => setIsAddModalOpen(false)}
                 className="px-4 py-2 text-on-surface-variant hover:text-on-surface font-mono text-xs uppercase tracking-widest transition-colors"
@@ -701,7 +701,7 @@ export default function OSGymPage() {
               </button>
               <button 
                 onClick={handleAddExercise}
-                className="px-6 py-2 bg-primary-container text-[#00363a] font-bold rounded-lg hover:bg-[#74f5ff] transition-colors font-mono text-xs uppercase tracking-widest shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+                className="px-6 py-2 bg-primary-container text-on-primary font-bold rounded-lg hover:bg-primary-fixed transition-colors font-mono text-xs uppercase tracking-widest shadow-glow"
               >
                 Add to Workout
               </button>
@@ -713,8 +713,8 @@ export default function OSGymPage() {
       {/* Plate Calculator Modal */}
       {isCalcOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#131315] border border-[#1f2026] rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-[#1f2026] flex justify-between items-center">
+          <div className="bg-surface-container border border-outline-variant rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-outline-variant flex justify-between items-center">
               <h2 className="font-display text-2xl font-bold text-on-surface">Plate Calculator</h2>
               <button onClick={() => setIsCalcOpen(false)} className="text-outline hover:text-error transition-colors">
                 ✕
@@ -771,8 +771,8 @@ export default function OSGymPage() {
       {/* Templates Modal */}
       {isTemplatesModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#131315] border border-[#1f2026] rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
-            <div className="p-6 border-b border-[#1f2026] flex justify-between items-center shrink-0">
+          <div className="bg-surface-container border border-outline-variant rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-outline-variant flex justify-between items-center shrink-0">
               <h2 className="font-display text-2xl font-bold text-on-surface">Workout Templates</h2>
               <button onClick={() => setIsTemplatesModalOpen(false)} className="text-outline hover:text-error transition-colors">
                 ✕

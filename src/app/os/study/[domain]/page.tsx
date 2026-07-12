@@ -254,7 +254,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
               <ChevronLeft className="w-6 h-6" />
             </button>
             <div>
-              <h1 className="font-display text-4xl text-foreground font-bold">{getDomainTitle()} <span className="text-primary-container font-mono text-sm ml-2">_NEXUS</span></h1>
+              <h1 className="font-display text-4xl text-foreground font-bold">{getDomainTitle()} <span className="text-primary font-mono text-sm ml-2">_NEXUS</span></h1>
               <p className="font-mono text-xs text-on-surface-variant uppercase tracking-widest mt-2">Track topics, projects, and progression</p>
             </div>
           </div>
@@ -263,7 +263,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
             <div className="bg-surface-container border border-card-border rounded-xl px-4 py-2 flex items-center gap-4 shadow-sm">
               <div>
                 <span className="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest block">LeetCode Today</span>
-                <span className="font-display text-xl font-bold text-primary-container leading-none">{leetcodeCount} <span className="text-sm font-normal text-on-surface-variant">solved</span></span>
+                <span className="font-display text-xl font-bold text-primary leading-none">{leetcodeCount} <span className="text-sm font-normal text-on-surface-variant">solved</span></span>
               </div>
               <div className="flex flex-col gap-1">
                 <button onClick={() => handleUpdateLeetCode(1)} className="w-6 h-6 bg-surface-variant hover:bg-primary-container hover:text-on-primary-container rounded flex items-center justify-center transition-colors text-on-surface-variant">
@@ -290,14 +290,14 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
 
               <div className="flex justify-between items-end mb-2">
                 <h2 className="font-display text-2xl font-bold flex items-center gap-2">
-                  <BookOpen className="w-6 h-6 text-primary-container" />
+                  <BookOpen className="w-6 h-6 text-primary" />
                   Curriculum
                 </h2>
                 <div className="flex items-center gap-4">
-                  <button onClick={() => setIsImportModalOpen(true)} className="text-xs font-mono uppercase tracking-widest text-primary-container hover:text-primary transition-colors flex items-center gap-1 group">
+                  <button onClick={() => setIsImportModalOpen(true)} className="text-xs font-mono uppercase tracking-widest text-primary hover:text-primary transition-colors flex items-center gap-1 group">
                     <Sparkles className="w-3 h-3 group-hover:animate-pulse" /> AI Import
                   </button>
-                  <button onClick={openNewTopic} className="text-xs font-mono uppercase tracking-widest text-primary-container hover:text-primary transition-colors flex items-center gap-1">
+                  <button onClick={openNewTopic} className="text-xs font-mono uppercase tracking-widest text-primary hover:text-primary transition-colors flex items-center gap-1">
                     <Plus className="w-3 h-3" /> Add Topic
                   </button>
                 </div>
@@ -316,7 +316,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
                         onClick={() => setExpandedTopicId(isExpanded ? null : topic.id)}
                       >
                         <div className="flex-1 pr-4">
-                          <h3 className={`font-bold text-lg transition-colors flex items-center gap-2 ${isExpanded ? 'text-primary-container' : 'text-on-surface'}`}>
+                          <h3 className={`font-bold text-lg transition-colors flex items-center gap-2 ${isExpanded ? 'text-primary' : 'text-on-surface'}`}>
                             {topic.title}
                           </h3>
                           <div className="flex items-center gap-4 mt-2">
@@ -353,7 +353,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
                               <h4 className="font-mono text-xs uppercase tracking-widest text-on-surface-variant">Checklist</h4>
                               <button 
                                 onClick={() => setAddingSubtopicTo(topic.id)}
-                                className="text-[10px] font-mono uppercase text-primary-container hover:text-primary flex items-center gap-1"
+                                className="text-[10px] font-mono uppercase text-primary hover:text-primary flex items-center gap-1"
                               >
                                 <Plus className="w-3 h-3"/> Add Item
                               </button>
@@ -363,7 +363,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
                                 <div key={sub.id} className="flex items-start gap-3 p-2 rounded hover:bg-surface-variant/30 group transition-colors">
                                   <button 
                                     onClick={() => handleToggleSubtopic(sub.id, sub.is_completed)}
-                                    className={`mt-0.5 shrink-0 transition-colors ${sub.is_completed ? 'text-primary-container' : 'text-outline group-hover:text-primary-container/50'}`}
+                                    className={`mt-0.5 shrink-0 transition-colors ${sub.is_completed ? 'text-primary' : 'text-outline group-hover:text-primary/50'}`}
                                   >
                                     {sub.is_completed ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                                   </button>
@@ -386,7 +386,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
                                     className="flex-1 bg-surface-container-lowest border border-card-border rounded px-2 py-1 text-sm focus:border-primary-container outline-none"
                                     placeholder="New item..."
                                   />
-                                  <button onClick={() => handleAddSubtopic(topic.id)} className="text-primary-container hover:text-primary"><CheckSquare className="w-4 h-4" /></button>
+                                  <button onClick={() => handleAddSubtopic(topic.id)} className="text-primary hover:text-primary"><CheckSquare className="w-4 h-4" /></button>
                                   <button onClick={() => setAddingSubtopicTo(null)} className="text-on-surface-variant"><X className="w-4 h-4" /></button>
                                 </div>
                               )}
@@ -401,7 +401,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
                           <div className="flex flex-col h-full pt-2">
                             <div className="flex justify-between items-center mb-3">
                               <h4 className="font-mono text-xs uppercase tracking-widest text-on-surface-variant">Research Notes</h4>
-                              {savingNotes[topic.id] && <span className="text-[10px] font-mono text-primary-container flex items-center gap-1"><Save className="w-3 h-3" /> Saved</span>}
+                              {savingNotes[topic.id] && <span className="text-[10px] font-mono text-primary flex items-center gap-1"><Save className="w-3 h-3" /> Saved</span>}
                             </div>
                             <textarea 
                               value={topic.notes}
@@ -475,7 +475,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
                         
                         <div className="flex items-center justify-between mt-auto">
                           <span className={`text-[10px] font-mono uppercase tracking-widest px-2 py-1 rounded border ${
-                            project.status === 'Completed' ? 'border-primary-container/30 text-primary-container bg-primary-container/10' : 
+                            project.status === 'Completed' ? 'border-primary-container/30 text-primary bg-primary-container/10' : 
                             project.status === 'In Progress' ? 'border-secondary-container/30 text-secondary-container bg-secondary-container/10' : 
                             'border-tertiary-container/30 text-tertiary-container bg-tertiary-container/10'
                           }`}>
@@ -624,7 +624,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-surface border border-card-border rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden glass-panel">
             <div className="p-4 border-b border-card-border flex justify-between items-center bg-primary-container/10">
-              <h3 className="font-display text-xl font-bold flex items-center gap-2 text-primary-container">
+              <h3 className="font-display text-xl font-bold flex items-center gap-2 text-primary">
                 <Sparkles className="w-5 h-5" />
                 AI Curriculum Import
               </h3>

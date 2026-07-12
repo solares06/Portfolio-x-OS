@@ -3,6 +3,8 @@ import React from "react";
 import LogoutButton from "@/components/os/LogoutButton";
 import TopBar from "@/components/os/TopBar";
 import CommandPalette from "@/components/CommandPalette";
+import { ThemeProvider } from "@/components/os/ThemeProvider";
+import ThemeToggle from "@/components/os/ThemeToggle";
 
 export default function OSLayout({
   children,
@@ -10,8 +12,9 @@ export default function OSLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="theme-os h-screen overflow-hidden bg-background text-foreground flex transition-colors">
-      <CommandPalette />
+    <ThemeProvider>
+      <div className="h-screen overflow-hidden bg-background text-foreground flex transition-colors">
+        <CommandPalette />
       <aside className="w-64 border-r border-card-border bg-card p-6 flex flex-col space-y-4 shrink-0">
         <h2 className="font-display font-bold text-2xl text-primary mb-4">OS Dashboard</h2>
         <nav className="flex flex-col space-y-2 font-sans flex-1">
@@ -24,7 +27,10 @@ export default function OSLayout({
           <Link href="/media" className="hover:text-primary transition-colors py-1">Media</Link>
           <Link href="/blog" className="hover:text-primary transition-colors py-1">Public Portfolio</Link>
         </nav>
-        <LogoutButton />
+        <div className="flex items-center justify-between mt-4">
+          <ThemeToggle />
+          <LogoutButton />
+        </div>
       </aside>
       <main className="flex-1 flex flex-col relative h-full overflow-hidden">
         <TopBar />
@@ -32,6 +38,7 @@ export default function OSLayout({
           {children}
         </div>
       </main>
-    </div>
+      </div>
+    </ThemeProvider>
   );
 }

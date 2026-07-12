@@ -82,7 +82,8 @@ export default function MeetingNoteModal({ isOpen, onClose, onSave, initialData 
             required
             value={date}
             onChange={e => setDate(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none [color-scheme:dark]"
+            className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none"
+            style={{ colorScheme: "var(--color-scheme)" }}
           />
         </div>
         <div>

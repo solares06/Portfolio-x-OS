@@ -49,7 +49,7 @@ export function ConfirmModal({
             className={`flex-1 px-4 py-2 transition-colors rounded font-mono text-sm uppercase tracking-wider flex justify-center items-center ${
               isDestructive 
                 ? "bg-error/20 text-error border border-error hover:bg-error hover:text-white"
-                : "bg-primary-container/20 text-primary-container border border-primary-container hover:bg-primary-container hover:text-on-primary-container"
+                : "bg-primary-container/20 text-primary border border-primary-container hover:bg-primary-container hover:text-on-primary-container"
             }`}
           >
             {loading ? (

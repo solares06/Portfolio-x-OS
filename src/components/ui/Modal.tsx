@@ -33,7 +33,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-md" 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center p-4 border-b border-card-border bg-surface-container-high shrink-0">
-          <h3 className="font-display font-bold text-lg text-primary-container uppercase tracking-widest neon-text">
+          <h3 className="font-display font-bold text-lg text-primary uppercase tracking-widest neon-text">
             {title}
           </h3>
           <button 

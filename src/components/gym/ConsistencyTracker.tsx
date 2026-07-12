@@ -196,7 +196,7 @@ export default function ConsistencyTracker() {
             </p>
           </div>
           <div className="text-right">
-            <div className="flex items-center gap-1 justify-end text-primary-container font-bold">
+            <div className="flex items-center gap-1 justify-end text-primary font-bold">
               <Flame className="w-4 h-4" />
               <span>{streak} Day Streak</span>
             </div>
@@ -262,7 +262,7 @@ export default function ConsistencyTracker() {
                             day.isCompleted 
                               ? 'text-on-primary-container font-bold opacity-80' 
                               : day.isToday 
-                                ? 'text-primary-container font-bold'
+                                ? 'text-primary font-bold'
                                 : 'text-on-surface-variant/70'
                           }`}>
                             {day.dayOfMonth}
@@ -280,7 +280,7 @@ export default function ConsistencyTracker() {
                 </div>
                 <div className="w-8 flex justify-end">
                   {totalWeekdays > 0 && completedWeekdays >= totalWeekdays && (
-                    <CheckCircle2 className="w-4 h-4 text-primary-container" />
+                    <CheckCircle2 className="w-4 h-4 text-primary" />
                   )}
                 </div>
               </div>
@@ -329,7 +329,7 @@ export default function ConsistencyTracker() {
                 <p className="text-error font-mono text-sm">{reportError}</p>
               ) : (
                 <div
-                  className="prose prose-invert prose-sm max-w-none font-sans text-on-surface [&_h1]:text-primary-container [&_h2]:text-primary-container [&_h3]:text-secondary-container [&_strong]:text-on-surface [&_li]:text-on-surface-variant"
+                  className="prose prose-invert prose-sm max-w-none font-sans text-on-surface [&_h1]:text-primary [&_h2]:text-primary [&_h3]:text-secondary-container [&_strong]:text-on-surface [&_li]:text-on-surface-variant"
                   dangerouslySetInnerHTML={{ __html: reportHtml || "" }}
                 />
               )}

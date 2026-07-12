@@ -102,7 +102,7 @@ export function ReadingListManager({ initialList }: { initialList: any[] }) {
           </div>
           <div>
             <label className="block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Status</label>
-            <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none [color-scheme:dark]">
+            <select value={status} onChange={e => setStatus(e.target.value)} className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none" style={{ colorScheme: "var(--color-scheme)" }}>
               <option value="reading">Reading</option>
               <option value="read">Read</option>
             </select>

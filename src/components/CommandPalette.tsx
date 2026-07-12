@@ -91,7 +91,7 @@ export default function CommandPalette() {
                   onSelect={() => runCommand(() => router.push(result.href))}
                   className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant transition-colors"
                 >
-                  <FileText className="w-4 h-4 text-primary-container" />
+                  <FileText className="w-4 h-4 text-primary" />
                   <div className="flex flex-col">
                     <span className="font-body text-sm font-medium text-on-surface">{result.title}</span>
                     <span className="font-mono text-[10px] text-on-surface-variant">{result.type} • {result.subtitle}</span>
@@ -124,7 +124,7 @@ export default function CommandPalette() {
 
               <Command.Group heading="System Actions" className="text-[10px] uppercase tracking-widest text-on-surface-variant p-2 mt-2 font-bold font-mono border-t border-outline-variant">
                 <Command.Item onSelect={() => runCommand(handleExport)} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
-                  <Download className="w-4 h-4 text-primary-container" /> Export OS Data Backup
+                  <Download className="w-4 h-4 text-primary" /> Export OS Data Backup
                 </Command.Item>
                 <Command.Item onSelect={() => runCommand(() => router.push("/settings"))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
                   <Settings className="w-4 h-4 text-on-surface-variant" /> OS Settings

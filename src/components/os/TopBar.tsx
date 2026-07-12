@@ -52,8 +52,8 @@ export default function TopBar() {
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 mt-2 w-80 bg-[#131315] border border-[#1f2026] rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-              <div className="p-4 border-b border-[#1f2026] flex justify-between items-center bg-surface-container-lowest">
+            <div className="absolute right-0 mt-2 w-80 bg-surface-container border border-outline-variant rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+              <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
                 <h3 className="font-display font-bold text-on-surface">Notifications</h3>
                 <span className="text-xs font-mono text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
                   {notifications.length}

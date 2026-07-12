@@ -64,7 +64,8 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData }: E
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all [color-scheme:dark]"
+              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all"
+              style={{ colorScheme: "var(--color-scheme)" }}
             />
           </div>
           <div>
@@ -75,7 +76,8 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData }: E
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all [color-scheme:dark]"
+              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all"
+              style={{ colorScheme: "var(--color-scheme)" }}
             />
           </div>
         </div>
@@ -86,7 +88,8 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData }: E
           <select
             value={recurrenceRule}
             onChange={(e) => setRecurrenceRule(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all [color-scheme:dark]"
+            className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all"
+            style={{ colorScheme: "var(--color-scheme)" }}
           >
             <option value="">Never</option>
             <option value="weekly">Weekly</option>
@@ -115,7 +118,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData }: E
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-primary-container/20 border border-primary-container text-primary-container hover:bg-primary-container hover:text-on-primary-container rounded transition-colors font-mono text-xs uppercase tracking-widest flex items-center justify-center min-w-[100px]"
+              className="px-4 py-2 bg-primary-container/20 border border-primary-container text-primary hover:bg-primary-container hover:text-on-primary-container rounded transition-colors font-mono text-xs uppercase tracking-widest flex items-center justify-center min-w-[100px]"
             >
               {loading ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span> : "Save Event"}
             </button>

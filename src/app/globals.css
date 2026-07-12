@@ -15,7 +15,8 @@
   }
 
   /* ── Neon OS / Material 3 Dark Theme ── */
-  .theme-os {
+  .theme-os-dark {
+    --color-scheme: dark;
     --bg-color: #131315;
     --text-color: #e5e1e4;
 
@@ -38,8 +39,8 @@
     --on-background: #e5e1e4;
 
     /* Primary — Electric Cyan */
-    --primary-color: #e1fdff;
-    --primary-container: #00f2ff;
+    --primary-color: #00f2ff;
+    --primary-container: #e1fdff;
     --on-primary: #00363a;
     --on-primary-container: #006a71;
     --primary-fixed: #74f5ff;
@@ -77,6 +78,75 @@
     /* Effects */
     --glow-primary: 0 0 12px rgba(0, 242, 255, 0.3);
     --glow-primary-strong: 0 0 12px rgba(0, 242, 255, 0.5);
+    
+    /* Variables for utility classes */
+    --glass-panel-bg: rgba(19, 19, 21, 0.8);
+    --scrollbar-thumb: #3a494b;
+  }
+
+  /* ── OS Light Theme (Frost & Pearl) ── */
+  .theme-os-light {
+    --color-scheme: light;
+    --bg-color: #F4F7F9; /* Very soft frosted blue-gray */
+    --text-color: #334155; /* Slate gray text */
+
+    /* Primary colors - Vibrant yet soft Sky Blue */
+    --primary-color: #0EA5E9;
+    --on-primary: #FFFFFF;
+    --primary-container: #E0F2FE;
+    --on-primary-container: #0369A1;
+    --primary-fixed: #BAE6FD;
+
+    /* Secondary - Soft Violet/Indigo */
+    --secondary: #6366F1;
+    --on-secondary: #FFFFFF;
+    --secondary-container: #E0E7FF;
+
+    /* Error */
+    --error: #EF4444;
+    --on-error: #FFFFFF;
+    --error-container: #FEE2E2;
+    --on-error-container: #991B1B;
+
+    /* Surface */
+    --surface: #FFFFFF; /* Pure white background */
+    --surface-dim: #F8FAFC;
+    --surface-bright: #FFFFFF;
+    --on-surface: #0F172A; /* Slate 900 for max contrast */
+    --surface-variant: #F1F5F9;
+    --on-surface-variant: #334155; /* Slate 700 for highly readable muted text */
+    --surface-border: #E2E8F0;
+    --surface-tint: #0EA5E9;
+    --on-background: #0F172A;
+    
+    /* Surface Containers (from low to high) */
+    --surface-container-lowest: #F4F7F9; /* Tinted cards */
+    --surface-container-low: #F1F5F9;
+    --surface-container: #E2E8F0;
+    --surface-container-high: #CBD5E1;
+    --surface-container-highest: #94A3B8;
+    
+    /* Outline */
+    --outline: #64748B; /* Slate 500 */
+    --outline-variant: #E2E8F0;
+
+    /* Inverse */
+    --inverse-surface: #0F172A;
+    --inverse-on-surface: #F8FAFC;
+    
+    /* Card backward compat */
+    --card-bg: #FFFFFF;
+    --card-border-color: #E2E8F0;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --card-radius: 0.75rem;
+
+    /* Effects */
+    --glow-primary: 0 4px 14px 0 rgba(14, 165, 233, 0.2);
+    --glow-primary-strong: 0 6px 20px rgba(14, 165, 233, 0.3);
+    
+    /* Variables for utility classes */
+    --glass-panel-bg: rgba(255, 255, 255, 0.7);
+    --scrollbar-thumb: #CBD5E1;
   }
 
   body {
@@ -86,21 +156,21 @@
 
 @layer components {
   .glass-panel {
-    background: rgba(19, 19, 21, 0.8);
+    background: var(--glass-panel-bg, rgba(19, 19, 21, 0.8));
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
 
   .neon-glow {
-    box-shadow: 0 0 12px rgba(0, 242, 255, 0.3);
+    box-shadow: var(--glow-primary);
   }
 
   .neon-glow-hover {
     transition: box-shadow 0.2s, border-color 0.2s;
   }
   .neon-glow-hover:hover {
-    box-shadow: 0 0 12px rgba(0, 242, 255, 0.5);
-    border-color: #00f2ff;
+    box-shadow: var(--glow-primary-strong);
+    border-color: var(--primary-container);
   }
 }
 
@@ -116,7 +186,30 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #3a494b;
+    background: var(--scrollbar-thumb, #3a494b);
     border-radius: 2px;
   }
+}
+
+/* Vision Board Masonry Layout */
+.masonry-grid {
+  column-count: 1;
+  column-gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .masonry-grid {
+    column-count: 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-grid {
+    column-count: 3;
+  }
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 1rem;
 }

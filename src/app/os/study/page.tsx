@@ -110,10 +110,10 @@ export default function OSStudyPage() {
             {countdowns.map(cls => (
               <div key={`countdown-${cls.id}`} className="glass-panel p-4 rounded-theme border border-primary-container/20 min-w-[200px] flex-shrink-0 flex items-center gap-4 bg-primary-container/5 relative overflow-hidden group">
                 <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <Timer className="w-24 h-24 text-primary-container" />
+                  <Timer className="w-24 h-24 text-primary" />
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-surface-variant flex flex-col items-center justify-center border border-card-border relative z-10">
-                  <span className="font-display text-xl font-bold text-primary-container leading-none">{cls.days}</span>
+                  <span className="font-display text-xl font-bold text-primary leading-none">{cls.days}</span>
                   <span className="font-mono text-[8px] uppercase tracking-widest text-on-surface-variant mt-1">Days</span>
                 </div>
                 <div className="relative z-10">
@@ -132,14 +132,14 @@ export default function OSStudyPage() {
         <section className="glass-panel rounded-theme border border-card-border p-6 flex flex-col gap-4">
           <div className="flex justify-between items-center border-b border-card-border pb-4">
             <h3 className="font-display text-2xl text-foreground flex items-center gap-2 font-bold">
-              <CalendarDays className="w-6 h-6 text-primary-container" />
+              <CalendarDays className="w-6 h-6 text-primary" />
               Current Semester Tracker
             </h3>
             <div className="flex items-center gap-2">
-              <button onClick={() => { setEditingClass(null); setIsClassModalOpen(true); }} className="text-on-surface-variant hover:text-primary-container transition-colors p-1">
+              <button onClick={() => { setEditingClass(null); setIsClassModalOpen(true); }} className="text-on-surface-variant hover:text-primary transition-colors p-1">
                 <Plus className="w-5 h-5" />
               </button>
-              <button className="text-on-surface-variant hover:text-primary-container transition-colors p-1">
+              <button className="text-on-surface-variant hover:text-primary transition-colors p-1">
                 <Filter className="w-5 h-5" />
               </button>
             </div>
@@ -203,7 +203,7 @@ export default function OSStudyPage() {
                       <td className="py-4 px-4 text-on-surface-variant truncate max-w-[200px]">{cls.notes}</td>
                       <td className="py-4 px-4">
                         <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => { setEditingClass(cls); setIsClassModalOpen(true); }} className="p-1 hover:bg-primary-container/20 text-on-surface-variant hover:text-primary-container rounded transition-colors"><Edit2 className="w-4 h-4" /></button>
+                          <button onClick={() => { setEditingClass(cls); setIsClassModalOpen(true); }} className="p-1 hover:bg-primary-container/20 text-on-surface-variant hover:text-primary rounded transition-colors"><Edit2 className="w-4 h-4" /></button>
                           <button onClick={() => setConfirmModal({ isOpen: true, id: cls.id, title: cls.subject })} className="p-1 hover:bg-error/20 text-on-surface-variant hover:text-error rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
@@ -224,13 +224,13 @@ export default function OSStudyPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link href="/study/ml" className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
             <div className="flex items-center gap-3 border-b border-card-border pb-4">
-              <Cpu className="w-8 h-8 text-primary-container" />
-              <h3 className="font-display text-2xl font-bold group-hover:text-primary-container transition-colors">Machine Learning</h3>
+              <Cpu className="w-8 h-8 text-primary" />
+              <h3 className="font-display text-2xl font-bold group-hover:text-primary transition-colors">Machine Learning</h3>
             </div>
             <p className="text-sm text-on-surface-variant flex-1">
               Neural networks, deep learning architectures, and data engineering pipelines. Track progress through core ML concepts and active projects.
             </p>
-            <div className="mt-4 pt-4 border-t border-card-border flex items-center justify-between text-xs font-mono uppercase tracking-widest text-primary-container">
+            <div className="mt-4 pt-4 border-t border-card-border flex items-center justify-between text-xs font-mono uppercase tracking-widest text-primary">
               <span>Enter Nexus</span>
               <span className="group-hover:translate-x-1 transition-transform">→</span>
             </div>
@@ -238,13 +238,13 @@ export default function OSStudyPage() {
 
           <Link href="/study/dsa" className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
             <div className="flex items-center gap-3 border-b border-card-border pb-4">
-              <Database className="w-8 h-8 text-primary-container" />
-              <h3 className="font-display text-2xl font-bold group-hover:text-primary-container transition-colors">Data Structures</h3>
+              <Database className="w-8 h-8 text-primary" />
+              <h3 className="font-display text-2xl font-bold group-hover:text-primary transition-colors">Data Structures</h3>
             </div>
             <p className="text-sm text-on-surface-variant flex-1">
               Algorithmic problem solving, complexity analysis, and pattern recognition. Track daily problems and core pattern mastery.
             </p>
-            <div className="mt-4 pt-4 border-t border-card-border flex items-center justify-between text-xs font-mono uppercase tracking-widest text-primary-container">
+            <div className="mt-4 pt-4 border-t border-card-border flex items-center justify-between text-xs font-mono uppercase tracking-widest text-primary">
               <span>Enter Nexus</span>
               <span className="group-hover:translate-x-1 transition-transform">→</span>
             </div>
@@ -252,13 +252,13 @@ export default function OSStudyPage() {
 
           <Link href="/study/web-dev" className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
             <div className="flex items-center gap-3 border-b border-card-border pb-4">
-              <Clock className="w-8 h-8 text-primary-container" />
-              <h3 className="font-display text-2xl font-bold group-hover:text-primary-container transition-colors">Web Dev</h3>
+              <Clock className="w-8 h-8 text-primary" />
+              <h3 className="font-display text-2xl font-bold group-hover:text-primary transition-colors">Web Dev</h3>
             </div>
             <p className="text-sm text-on-surface-variant flex-1">
               Full-stack architectures, modern frontend frameworks, and cloud deployments. Track side projects and system design concepts.
             </p>
-            <div className="mt-4 pt-4 border-t border-card-border flex items-center justify-between text-xs font-mono uppercase tracking-widest text-primary-container">
+            <div className="mt-4 pt-4 border-t border-card-border flex items-center justify-between text-xs font-mono uppercase tracking-widest text-primary">
               <span>Enter Nexus</span>
               <span className="group-hover:translate-x-1 transition-transform">→</span>
             </div>
