@@ -128,9 +128,9 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
       setSyllabusText("");
       setIsImportModalOpen(false);
       loadData();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Failed to import syllabus.");
+      alert(e.message || "Failed to import syllabus.");
     } finally {
       setIsImporting(false);
     }

@@ -373,10 +373,12 @@ ${syllabusText}
   });
 
   const aiResponse = result.response.text();
+  let cleanJson = aiResponse.replace(/```json/g, "").replace(/```/g, "").trim();
   let parsed;
   try {
-    parsed = JSON.parse(aiResponse);
+    parsed = JSON.parse(cleanJson);
   } catch (e) {
+    console.error("Raw AI response:", aiResponse);
     throw new Error("Failed to parse AI response");
   }
 
