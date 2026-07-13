@@ -11,7 +11,6 @@ export default function CommandPalette() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const prefix = pathname.startsWith("/os") ? "/os" : "";
