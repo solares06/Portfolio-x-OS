@@ -353,9 +353,7 @@ export async function importCurriculumWithAI(domain: string, syllabusText: strin
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
-
-  const prompt = `
+    const prompt = `
 You are an expert curriculum designer. The user has provided a raw syllabus or course outline.
 Your task is to parse this syllabus into structured Topics, and for each Topic, a list of Subtopics.
 Return ONLY valid JSON in the following format:
@@ -372,12 +370,23 @@ Here is the syllabus text:
 ${syllabusText}
   `;
 
-  const result = await model.generateContent({
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: { responseMimeType: "application/json" }
-  });
-
-  const aiResponse = result.response.text();
+    let aiResponse = "";
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+      const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" }
+      });
+      aiResponse = result.response.text();
+    } catch (e: any) {
+      console.warn("gemini-3.5-flash failed, falling back to gemini-1.5-flash", e);
+      const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const fallbackResult = await fallbackModel.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" }
+      });
+      aiResponse = fallbackResult.response.text();
+    }
   let cleanJson = aiResponse.replace(/```json/g, "").replace(/```/g, "").trim();
     let parsed;
     try {
