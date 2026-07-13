@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Modal } from "./ui/Modal";
+import FinanceCategorySelect from "./FinanceCategorySelect";
 
 export type RecurringData = {
   id?: string;
@@ -108,17 +109,14 @@ export default function RecurringTransactionModal({ isOpen, onClose, onSave, ini
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div>
+          <div className="z-40 relative">
             <label className="block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">
               Category
             </label>
-            <input
-              type="text"
-              required
+            <FinanceCategorySelect
+              type={type}
               value={category}
-              onChange={e => setCategory(e.target.value)}
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none"
-              placeholder="e.g. Netflix, Salary"
+              onChange={(val) => setCategory(val)}
             />
           </div>
           <div>

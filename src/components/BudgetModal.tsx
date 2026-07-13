@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Modal } from "./ui/Modal";
+import FinanceCategorySelect from "./FinanceCategorySelect";
 
 export type BudgetData = {
   id?: string;
@@ -55,17 +56,14 @@ export default function BudgetModal({ isOpen, onClose, onSave, initialData }: Bu
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "Edit Budget" : "New Budget"}>
       <form onSubmit={handleSubmit} className="flex flex-col space-y-4 mt-4">
-        <div>
+        <div className="z-40 relative">
           <label className="block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">
             Category
           </label>
-          <input
-            type="text"
-            required
+          <FinanceCategorySelect
+            type="expense"
             value={category}
-            onChange={e => setCategory(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface outline-none"
-            placeholder="e.g. Food, Transport"
+            onChange={(val) => setCategory(val)}
           />
         </div>
         <div>

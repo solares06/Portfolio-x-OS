@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { X, Calendar as CalendarIcon, Tag, AlignLeft, DollarSign } from "lucide-react";
+import { X, Calendar as CalendarIcon, AlignLeft, DollarSign } from "lucide-react";
+import FinanceCategorySelect from "./FinanceCategorySelect";
 
 export type FinanceEntryData = {
   id: string;
@@ -98,19 +99,13 @@ export default function FinanceModal({ isOpen, onClose, onSave, initialData, mod
             </select>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 z-40 relative">
             <label className="font-mono text-xs uppercase text-on-surface-variant tracking-wider">Category</label>
-            <div className="relative">
-              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
-              <input 
-                type="text" 
-                required
-                placeholder="e.g. Groceries"
-                value={formData.category || ""}
-                onChange={e => setFormData({...formData, category: e.target.value})}
-                className="w-full bg-surface-container border border-outline-variant focus:border-primary-container focus:outline-none pl-10 pr-3 py-2 text-sm font-mono rounded text-on-surface uppercase placeholder:normal-case"
-              />
-            </div>
+            <FinanceCategorySelect
+              type={formData.type || "expense"}
+              value={formData.category || ""}
+              onChange={(val) => setFormData({ ...formData, category: val })}
+            />
           </div>
 
           <div className="space-y-1">

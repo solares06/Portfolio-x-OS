@@ -302,3 +302,66 @@ export async function getChartData() {
   }
   return data;
 }
+
+export async function getFinanceCategories() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("finance_categories")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching finance categories:", error);
+    return [];
+  }
+  return data;
+}
+
+export async function createFinanceCategory(name: string, type: 'income' | 'expense') {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("finance_categories")
+    .insert([
+      {
+        user_id: user.id,
+        name,
+        type,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating finance category:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function deleteFinanceCategory(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("finance_categories")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Error deleting finance category:", error);
+    throw error;
+  }
+}
+
