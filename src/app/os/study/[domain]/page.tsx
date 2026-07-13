@@ -124,10 +124,14 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
     if (!syllabusText.trim()) return;
     setIsImporting(true);
     try {
-      await importCurriculumWithAI(domainKey, syllabusText);
-      setSyllabusText("");
-      setIsImportModalOpen(false);
-      loadData();
+      const res = await importCurriculumWithAI(domainKey, syllabusText);
+      if (res && res.error) {
+        alert("Error: " + res.error);
+      } else {
+        setSyllabusText("");
+        setIsImportModalOpen(false);
+        loadData();
+      }
     } catch (e: any) {
       console.error(e);
       alert(e.message || "Failed to import syllabus.");

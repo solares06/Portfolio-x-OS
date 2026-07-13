@@ -343,11 +343,16 @@ export async function reviewStudySubtopic(subtopicId: string, quality: number) {
 }
 
 export async function importCurriculumWithAI(domain: string, syllabusText: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    if (!process.env.GEMINI_API_KEY) {
+      return { success: false, error: "GEMINI_API_KEY is not configured on the server." };
+    }
+
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
   const prompt = `
@@ -374,17 +379,17 @@ ${syllabusText}
 
   const aiResponse = result.response.text();
   let cleanJson = aiResponse.replace(/```json/g, "").replace(/```/g, "").trim();
-  let parsed;
-  try {
-    parsed = JSON.parse(cleanJson);
-  } catch (e) {
-    console.error("Raw AI response:", aiResponse);
-    throw new Error("Failed to parse AI response");
-  }
+    let parsed;
+    try {
+      parsed = JSON.parse(cleanJson);
+    } catch (e) {
+      console.error("Raw AI response:", aiResponse);
+      return { success: false, error: "Failed to parse AI response. Try a simpler syllabus." };
+    }
 
-  if (!parsed.topics || !Array.isArray(parsed.topics)) {
-    throw new Error("Invalid AI response format");
-  }
+    if (!parsed.topics || !Array.isArray(parsed.topics)) {
+      return { success: false, error: "Invalid AI response format" };
+    }
 
   // Insert topics and subtopics
   for (const topic of parsed.topics) {
@@ -401,15 +406,21 @@ ${syllabusText}
 
     if (topicError || !topicData) continue;
 
-    if (topic.subtopics && Array.isArray(topic.subtopics)) {
-      const subtopicInserts = topic.subtopics.map((st: string) => ({
-        topic_id: topicData.id,
-        title: st
-      }));
-      if (subtopicInserts.length > 0) {
-        await supabase.from("study_subtopics").insert(subtopicInserts);
+      if (topic.subtopics && Array.isArray(topic.subtopics)) {
+        const subtopicInserts = topic.subtopics.map((st: string) => ({
+          topic_id: topicData.id,
+          title: st
+        }));
+        if (subtopicInserts.length > 0) {
+          await supabase.from("study_subtopics").insert(subtopicInserts);
+        }
       }
     }
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error(error);
+    return { success: false, error: error.message || "An unknown server error occurred" };
   }
 }
 
