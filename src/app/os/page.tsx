@@ -598,7 +598,7 @@ export default function OSDashboardPage() {
                 <p className="text-xs text-on-surface-variant/70 mt-1">Upload some photos that inspire you!</p>
               </div>
             ) : (
-              <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
                 <div className="masonry-grid">
                   {visionBoard.map((img) => (
                     <div key={img.id} className="masonry-item relative group rounded-theme overflow-hidden border border-card-border">
