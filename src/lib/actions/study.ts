@@ -379,8 +379,8 @@ ${syllabusText}
       });
       aiResponse = result.response.text();
     } catch (e: any) {
-      console.warn("gemini-3.5-flash failed, falling back to gemini-1.5-flash", e);
-      const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      console.warn("gemini-3.5-flash failed, falling back to gemini-flash-latest", e);
+      const fallbackModel = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
       const fallbackResult = await fallbackModel.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: { responseMimeType: "application/json" }
