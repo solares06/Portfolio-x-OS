@@ -327,8 +327,8 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
                           </h3>
                           <div className="flex items-center gap-4 mt-2">
                             <div className="flex items-center gap-2 flex-1 max-w-[200px]">
-                              <div className="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
-                                <div className="h-full bg-primary-container transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                              <div className="h-1.5 w-full bg-surface-border rounded-full overflow-hidden">
+                                <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }}></div>
                               </div>
                               <span className="font-mono text-[10px] text-on-surface-variant">{progress}%</span>
                             </div>
