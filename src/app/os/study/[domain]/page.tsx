@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ChevronLeft, ChevronDown, ChevronRight, ExternalLink, CheckSquare, Square, FolderGit2, BookOpen, Plus, Trash2, Edit2, Save, X, Clock, Sparkles } from "lucide-react";
 import { 
   getStudyDomainData, 
@@ -40,6 +40,8 @@ type Project = {
 
 export default function StudyDomainPage({ params }: { params: { domain: string } }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const prefix = pathname.startsWith("/os") ? "/os" : "";
   const domainKey = params.domain;
   
   const [loading, setLoading] = useState(true);
@@ -248,7 +250,7 @@ export default function StudyDomainPage({ params }: { params: { domain: string }
         <header className="flex items-center gap-4 border-b border-card-border pb-6 justify-between">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => router.push('/study')}
+              onClick={() => router.push(`${prefix}/study`)}
               className="p-2 hover:bg-surface-variant rounded-full transition-colors text-on-surface-variant hover:text-on-surface"
             >
               <ChevronLeft className="w-6 h-6" />

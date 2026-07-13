@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import {
   Clock,
   CalendarDays,
@@ -27,6 +28,9 @@ import ConfirmModal from "@/components/ConfirmModal";
 import StudyConsistencyTracker from "@/components/study/StudyConsistencyTracker";
 
 export default function OSStudyPage() {
+  const pathname = usePathname();
+  const prefix = pathname.startsWith("/os") ? "/os" : "";
+
   const [semester, setSemester] = useState<SemesterClass[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -222,7 +226,7 @@ export default function OSStudyPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link href="/study/ml" className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
+          <Link href={`${prefix}/study/ml`} className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
             <div className="flex items-center gap-3 border-b border-card-border pb-4">
               <Cpu className="w-8 h-8 text-primary" />
               <h3 className="font-display text-2xl font-bold group-hover:text-primary transition-colors">Machine Learning</h3>
@@ -236,7 +240,7 @@ export default function OSStudyPage() {
             </div>
           </Link>
 
-          <Link href="/study/dsa" className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
+          <Link href={`${prefix}/study/dsa`} className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
             <div className="flex items-center gap-3 border-b border-card-border pb-4">
               <Database className="w-8 h-8 text-primary" />
               <h3 className="font-display text-2xl font-bold group-hover:text-primary transition-colors">Data Structures</h3>
@@ -250,7 +254,7 @@ export default function OSStudyPage() {
             </div>
           </Link>
 
-          <Link href="/study/web-dev" className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
+          <Link href={`${prefix}/study/web-dev`} className="glass-panel p-6 rounded-theme border border-card-border hover:border-primary-container transition-colors group cursor-pointer neon-glow-hover flex flex-col gap-4">
             <div className="flex items-center gap-3 border-b border-card-border pb-4">
               <Clock className="w-8 h-8 text-primary" />
               <h3 className="font-display text-2xl font-bold group-hover:text-primary transition-colors">Web Dev</h3>

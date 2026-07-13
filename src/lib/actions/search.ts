@@ -34,7 +34,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       type: "Task",
       title: t.title,
       subtitle: `Status: ${t.status}`,
-      href: `/os/dashboard`
+      href: `/`
     }));
   }
 
@@ -52,7 +52,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       type: "Research Note",
       title: n.title,
       subtitle: n.content.substring(0, 40) + "...",
-      href: `/os/dashboard`
+      href: `/`
     }));
   }
 
@@ -70,7 +70,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       type: "Finance",
       title: f.description,
       subtitle: `${f.type === 'expense' ? '-' : '+'}$${f.amount}`,
-      href: `/os/finance`
+      href: `/finance`
     }));
   }
 
@@ -88,7 +88,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       type: "Journal",
       title: j.title,
       subtitle: j.content?.substring(0, 40) + "...",
-      href: `/os/dashboard`
+      href: `/journal`
     }));
   }
 

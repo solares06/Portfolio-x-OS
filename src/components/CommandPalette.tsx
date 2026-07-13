@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Command } from "cmdk";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Search, Download, Terminal, Calculator, Folder, FileText, Activity, Users, Settings } from "lucide-react";
 import { globalSearch, SearchResult } from "@/lib/actions/search";
 
@@ -11,7 +11,10 @@ export default function CommandPalette() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const prefix = pathname.startsWith("/os") ? "/os" : "";
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -88,7 +91,7 @@ export default function CommandPalette() {
               {results.map((result) => (
                 <Command.Item 
                   key={result.id} 
-                  onSelect={() => runCommand(() => router.push(result.href))}
+                  onSelect={() => runCommand(() => router.push(`${prefix}${result.href === '/' ? '' : result.href}` || '/'))}
                   className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant transition-colors"
                 >
                   <FileText className="w-4 h-4 text-primary" />
@@ -105,19 +108,19 @@ export default function CommandPalette() {
           {!query && (
             <>
               <Command.Group heading="Navigation" className="text-[10px] uppercase tracking-widest text-on-surface-variant p-2 font-bold font-mono">
-                <Command.Item onSelect={() => runCommand(() => router.push("/"))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
+                <Command.Item onSelect={() => runCommand(() => router.push(`${prefix}/`))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
                   <Terminal className="w-4 h-4 text-on-surface-variant" /> Go to Dashboard
                 </Command.Item>
-                <Command.Item onSelect={() => runCommand(() => router.push("/finance"))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
+                <Command.Item onSelect={() => runCommand(() => router.push(`${prefix}/finance`))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
                   <Calculator className="w-4 h-4 text-on-surface-variant" /> Go to Finance
                 </Command.Item>
-                <Command.Item onSelect={() => runCommand(() => router.push("/gym"))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
+                <Command.Item onSelect={() => runCommand(() => router.push(`${prefix}/gym`))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
                   <Activity className="w-4 h-4 text-on-surface-variant" /> Go to Gym
                 </Command.Item>
-                <Command.Item onSelect={() => runCommand(() => router.push("/study"))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
+                <Command.Item onSelect={() => runCommand(() => router.push(`${prefix}/study`))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
                   <Folder className="w-4 h-4 text-on-surface-variant" /> Go to Study Nexus
                 </Command.Item>
-                <Command.Item onSelect={() => runCommand(() => router.push("/extracurricular"))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
+                <Command.Item onSelect={() => runCommand(() => router.push(`${prefix}/extracurricular`))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
                   <Users className="w-4 h-4 text-on-surface-variant" /> Go to E-Cell
                 </Command.Item>
               </Command.Group>
@@ -126,7 +129,7 @@ export default function CommandPalette() {
                 <Command.Item onSelect={() => runCommand(handleExport)} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
                   <Download className="w-4 h-4 text-primary" /> Export OS Data Backup
                 </Command.Item>
-                <Command.Item onSelect={() => runCommand(() => router.push("/settings"))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
+                <Command.Item onSelect={() => runCommand(() => router.push(`${prefix}/settings`))} className="flex items-center gap-2 p-2 mt-1 rounded cursor-pointer hover:bg-surface-variant data-[selected=true]:bg-surface-variant text-sm font-medium transition-colors">
                   <Settings className="w-4 h-4 text-on-surface-variant" /> OS Settings
                 </Command.Item>
               </Command.Group>
