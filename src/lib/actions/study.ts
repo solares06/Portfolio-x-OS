@@ -353,7 +353,7 @@ export async function importCurriculumWithAI(domain: string, syllabusText: strin
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const prompt = `
 You are an expert curriculum designer. The user has provided a raw syllabus or course outline.
