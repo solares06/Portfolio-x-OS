@@ -443,62 +443,8 @@ export default function OSDashboardPage() {
               </div>
             </section>
 
-            {/* To Do (Tasks) */}
-            <section className="bg-card border border-card-border rounded-theme p-6 glass-panel neon-glow-hover">
-              <header className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  <h2 className="font-display text-xl font-bold">To Do</h2>
-                  <span className="font-mono text-[10px] bg-primary-container text-on-primary-container px-2 py-0.5 rounded-sm">
-                    {tasks.filter(t => !t.done).length} PENDING
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => { setEditingTask(null); setIsTaskModalOpen(true); }}
-                    className="flex items-center space-x-1 font-mono text-xs text-on-surface-variant hover:text-primary transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add</span>
-                  </button>
-                  <button onClick={cycleFilter} className="flex items-center space-x-1 font-mono text-xs text-on-surface-variant hover:text-primary transition-colors">
-                    <Filter className="w-4 h-4" />
-                    <span>{taskFilter.toUpperCase()}</span>
-                  </button>
-                </div>
-              </header>
-              
-              <div className="space-y-3">
-                {filteredTasks.length === 0 ? (
-                  <div className="text-on-surface-variant font-mono text-sm text-center py-4">No active protocols</div>
-                ) : filteredTasks.map(task => (
-                  <div key={task.id} className={`flex items-start space-x-4 p-4 rounded-theme border transition-all ${task.done ? 'bg-surface-container-lowest border-transparent opacity-50' : 'bg-surface-container border-card-border hover:border-outline-variant'}`}>
-                    <button onClick={() => toggleTask(task.id, task.done)} className="mt-1 flex-shrink-0 text-on-surface-variant hover:text-primary transition-colors">
-                      {task.done ? <CheckCircle className="w-5 h-5 text-primary" /> : <Circle className="w-5 h-5" />}
-                    </button>
-                    <div className="flex-1 space-y-2 group">
-                      <div className="flex items-center justify-between">
-                        <h3 className={`font-bold ${task.done ? 'line-through text-on-surface-variant' : 'text-foreground'}`}>{task.title}</h3>
-                        <div className="flex items-center space-x-2">
-                          <div className="hidden group-hover:flex space-x-2 mr-2">
-                            <button onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); }} className="text-on-surface-variant hover:text-primary">
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => setConfirmModal({ isOpen: true, type: 'task', id: task.id, title: task.title })} className="text-on-surface-variant hover:text-error">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <span className="font-mono text-[10px] text-on-surface-variant">DUE: {task.due_date || 'N/A'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          {/* Right Column: Timeline */}
-          <div className="space-y-6">
+            
+          {/* Timeline (Moved to left column) */}
             <section className="bg-card border border-card-border rounded-theme p-6 glass-panel neon-glow-hover sticky top-6">
               <header className="flex items-center justify-between mb-8 pb-4 border-b border-card-border">
                 <div>
@@ -547,6 +493,78 @@ export default function OSDashboardPage() {
                     </div>
                   );
                 })}
+              </div>
+            </section>
+          </div>
+
+          {/* Right Column: To Do (Tasks) */}
+          <div className="space-y-6">
+            {/* To Do (Tasks) */}
+            <section className="bg-card border border-card-border rounded-theme p-6 glass-panel neon-glow-hover">
+              <header className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <h2 className="font-display text-xl font-bold">To Do</h2>
+                  <span className="font-mono text-[10px] bg-primary-container text-on-primary-container px-2 py-0.5 rounded-sm">
+                    {tasks.filter(t => !t.done).length} PENDING
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => { setEditingTask(null); setIsTaskModalOpen(true); }}
+                    className="flex items-center space-x-1 font-mono text-xs text-on-surface-variant hover:text-primary transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add</span>
+                  </button>
+                  <button onClick={cycleFilter} className="flex items-center space-x-1 font-mono text-xs text-on-surface-variant hover:text-primary transition-colors">
+                    <Filter className="w-4 h-4" />
+                    <span>{taskFilter.toUpperCase()}</span>
+                  </button>
+                </div>
+              </header>
+              
+              <div className="space-y-3">
+                {filteredTasks.length === 0 ? (
+                  <div className="text-on-surface-variant font-mono text-sm text-center py-4">No active protocols</div>
+                ) : filteredTasks.map(task => (
+                  <div key={task.id} className={`flex items-start space-x-4 p-4 rounded-theme border transition-all ${task.done ? 'bg-surface-container-lowest border-transparent opacity-50' : 'bg-surface-container border-card-border hover:border-outline-variant'}`}>
+                    <button onClick={() => toggleTask(task.id, task.done)} className="mt-1 flex-shrink-0 text-on-surface-variant hover:text-primary transition-colors">
+                      {task.done ? <CheckCircle className="w-5 h-5 text-primary" /> : <Circle className="w-5 h-5" />}
+                    </button>
+                    <div className="flex-1 space-y-2 group">
+                      <div className="flex items-center justify-between">
+                        <h3 className={`font-bold ${task.done ? 'line-through text-on-surface-variant' : 'text-foreground'}`}>{task.title}</h3>
+                        <div className="flex items-center space-x-2">
+                          <div className="hidden group-hover:flex space-x-2 mr-2">
+                            <button onClick={() => { setEditingTask(task); setIsTaskModalOpen(true); }} className="text-on-surface-variant hover:text-primary">
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={async () => {
+                                if (task.done) {
+                                  // Optimistic delete without warning
+                                  setTasks(prev => prev.filter(t => t.id !== task.id));
+                                  try {
+                                    await deleteTask(task.id);
+                                  } catch (e) {
+                                    console.error("Failed to delete task:", e);
+                                    refreshData(); // Revert on failure
+                                  }
+                                } else {
+                                  setConfirmModal({ isOpen: true, type: 'task', id: task.id, title: task.title });
+                                }
+                              }} 
+                              className="text-on-surface-variant hover:text-error"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <span className="font-mono text-[10px] text-on-surface-variant">TIME: {task.due_date || 'N/A'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </section>
           </div>

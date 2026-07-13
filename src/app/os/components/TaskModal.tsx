@@ -51,10 +51,10 @@ export function TaskModal({ isOpen, onClose, onSave, initialData }: TaskModalPro
         </div>
         <div>
           <label className="block font-mono text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">
-            Due Date (Optional)
+            Due Time (Optional)
           </label>
           <input
-            type="date"
+            type="time"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
             className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all"
