@@ -49,8 +49,8 @@ export default function OSFinancePage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<{id: string, type: string} | null>(null);
 
-  async function loadData() {
-    setLoading(true);
+  async function loadData(showLoading = true) {
+    if (showLoading) setLoading(true);
     try {
       await processRecurringTransactions(); // Auto-process on load
 
@@ -69,7 +69,7 @@ export default function OSFinancePage() {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }
 
@@ -84,12 +84,12 @@ export default function OSFinancePage() {
     } else if (modalMode === "edit" && editingEntry) {
       await updateFinanceEntry(editingEntry.id, { date: data.date, category: data.category, amount: parseFloat(data.amount), type: data.type, notes: data.notes });
     }
-    await loadData();
+    await loadData(false);
   };
 
   const handleSaveBudget = async (data: BudgetData) => {
     await setBudget(data.category, parseFloat(data.amount));
-    await loadData();
+    await loadData(false);
   };
 
   const handleSaveRecurring = async (data: RecurringData) => {
@@ -179,17 +179,17 @@ export default function OSFinancePage() {
           <div className="bg-surface-container-low border border-surface-variant p-6 rounded-lg relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-primary"></div>
             <div className="flex items-center gap-3 text-on-surface-variant mb-2"><TrendingUp className="w-5 h-5 text-primary" /><h3 className="font-mono text-xs uppercase tracking-widest">Income (Month)</h3></div>
-            <p className="font-display text-3xl font-bold text-primary">${summary.income.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="font-display text-3xl font-bold text-primary">₹{summary.income.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
           <div className="bg-surface-container-low border border-surface-variant p-6 rounded-lg relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-error"></div>
             <div className="flex items-center gap-3 text-on-surface-variant mb-2"><TrendingDown className="w-5 h-5 text-error" /><h3 className="font-mono text-xs uppercase tracking-widest">Expense (Month)</h3></div>
-            <p className="font-display text-3xl font-bold text-error">${summary.expense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="font-display text-3xl font-bold text-error">₹{summary.expense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
           <div className="bg-surface-container-low border border-surface-variant p-6 rounded-lg relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
             <div className="flex items-center gap-3 text-on-surface-variant mb-2"><Wallet className="w-5 h-5 text-primary" /><h3 className="font-mono text-xs uppercase tracking-widest">Net Balance</h3></div>
-            <p className="font-display text-3xl font-bold text-on-surface">${summary.net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="font-display text-3xl font-bold text-on-surface">₹{summary.net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
         </div>
 
@@ -247,7 +247,7 @@ export default function OSFinancePage() {
                           {b.category} 
                           <button onClick={() => { setEntryToDelete({id: b.id, type: 'budget'}); setIsDeleteModalOpen(true); }} className="opacity-0 group-hover:opacity-100 text-error"><Trash2 className="w-3 h-3"/></button>
                         </span>
-                        <span className={isOver ? 'text-error font-bold' : 'text-on-surface-variant'}>${spent.toFixed(0)} / ${limit.toFixed(0)}</span>
+                        <span className={isOver ? 'text-error font-bold' : 'text-on-surface-variant'}>₹{spent.toFixed(0)} / ₹{limit.toFixed(0)}</span>
                       </div>
                       <div className="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
                         <div className={`h-full ${isOver ? 'bg-error' : 'bg-primary'} transition-all`} style={{ width: `${percent}%` }}></div>
@@ -270,7 +270,7 @@ export default function OSFinancePage() {
                       <div className="text-xs font-mono text-on-surface-variant">Due: {new Date(r.next_date).toLocaleDateString()} ({r.recurrence})</div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className={`font-mono ${r.type === 'income' ? 'text-primary' : 'text-error'}`}>${parseFloat(r.amount).toFixed(2)}</div>
+                      <div className={`font-mono ${r.type === 'income' ? 'text-primary' : 'text-error'}`}>₹{parseFloat(r.amount).toFixed(2)}</div>
                       <button onClick={() => { setEntryToDelete({id: r.id, type: 'recurring'}); setIsDeleteModalOpen(true); }} className="opacity-0 group-hover:opacity-100 text-error"><Trash2 className="w-4 h-4"/></button>
                     </div>
                   </div>
@@ -300,7 +300,7 @@ export default function OSFinancePage() {
                       </div>
                       <div className="flex items-center gap-4">
                         <div className={`font-mono font-bold text-lg ${isIncome ? 'text-primary' : 'text-error'}`}>
-                          {isIncome ? "+" : "-"}${parseFloat(entry.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {isIncome ? "+" : "-"}₹{parseFloat(entry.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => { setEditingEntry({...entry, amount: parseFloat(entry.amount).toString()}); setModalMode("edit"); setIsModalOpen(true); }} className="text-on-surface-variant hover:text-primary transition-colors p-1 rounded"><Edit2 className="w-4 h-4" /></button>
