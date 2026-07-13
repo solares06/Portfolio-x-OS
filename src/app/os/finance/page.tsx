@@ -202,7 +202,7 @@ export default function OSFinancePage() {
                 <BarChart data={dailyData}>
                   <XAxis dataKey="date" stroke="#666" fontSize={10} tickFormatter={(val) => new Date(val).getDate().toString()} />
                   <YAxis stroke="#666" fontSize={10} />
-                  <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: '#333' }} />
+                  <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ backgroundColor: '#111', borderColor: '#333' }} />
                   <Bar dataKey="income" fill="#00F2FF" radius={[2,2,0,0]} />
                   <Bar dataKey="expense" fill="#FF0055" radius={[2,2,0,0]} />
                 </BarChart>
