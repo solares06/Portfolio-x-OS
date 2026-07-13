@@ -22,10 +22,6 @@ export async function updateSession(
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, {
               ...options,
-              domain:
-                process.env.NODE_ENV === "production"
-                  ? "os.souranilsen.com"
-                  : undefined,
             })
           );
         },
