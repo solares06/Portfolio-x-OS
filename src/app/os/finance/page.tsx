@@ -101,7 +101,7 @@ export default function OSFinancePage() {
       next_date: data.next_date,
       notes: data.notes
     });
-    await loadData();
+    await loadData(false);
   };
 
   const confirmDelete = async () => {
@@ -110,7 +110,7 @@ export default function OSFinancePage() {
       if (entryToDelete.type === 'entry') await deleteFinanceEntry(entryToDelete.id);
       if (entryToDelete.type === 'budget') await deleteBudget(entryToDelete.id);
       if (entryToDelete.type === 'recurring') await deleteRecurringTransaction(entryToDelete.id);
-      await loadData();
+      await loadData(false);
     } catch (e) {
       console.error(e);
     }
