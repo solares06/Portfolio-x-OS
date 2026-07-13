@@ -598,18 +598,20 @@ export default function OSDashboardPage() {
                 <p className="text-xs text-on-surface-variant/70 mt-1">Upload some photos that inspire you!</p>
               </div>
             ) : (
-              <div className="masonry-grid">
-                {visionBoard.map((img) => (
-                  <div key={img.id} className="masonry-item relative group rounded-theme overflow-hidden border border-card-border">
-                    <img src={img.image_url} alt="Vision Board" className="w-full h-auto object-cover" loading="lazy" />
-                    <button 
-                      onClick={() => setConfirmModal({ isOpen: true, type: 'vision', id: img.id, title: 'this image', url: img.image_url })}
-                      className="absolute top-3 right-3 bg-background/80 backdrop-blur text-error p-2 rounded-full opacity-0 group-hover:opacity-100 hover:bg-background transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+              <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="masonry-grid">
+                  {visionBoard.map((img) => (
+                    <div key={img.id} className="masonry-item relative group rounded-theme overflow-hidden border border-card-border">
+                      <img src={img.image_url} alt="Vision Board" className="w-full h-auto object-cover" loading="lazy" />
+                      <button 
+                        onClick={() => setConfirmModal({ isOpen: true, type: 'vision', id: img.id, title: 'this image', url: img.image_url })}
+                        className="absolute top-3 right-3 bg-background/80 backdrop-blur text-error p-2 rounded-full opacity-0 group-hover:opacity-100 hover:bg-background transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
