@@ -11,6 +11,9 @@ export async function middleware(request: NextRequest) {
   const rootPaths = ["/login", "/auth/callback", "/api"];
   const isRootPath = rootPaths.some((p) => pathname.startsWith(p));
 
+  const isServerAction = request.headers.has("next-action");
+  const isRSC = request.headers.has("rsc") || request.nextUrl.searchParams.has("_rsc");
+
   // Determine the base response (rewrite or pass-through)
   let initialResponse: NextResponse;
   
@@ -30,6 +33,11 @@ export async function middleware(request: NextRequest) {
 
   // If public site, we just return the initial rewrite, no auth needed
   if (!isOSSubdomain && !isRootPath) {
+    return initialResponse;
+  }
+
+  // Skip session update for Next.js internal requests to prevent response corruption
+  if (isServerAction || isRSC) {
     return initialResponse;
   }
 
