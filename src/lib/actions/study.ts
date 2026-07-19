@@ -2,6 +2,7 @@
 
 import { createClient } from "../supabase/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { SubjectType } from "@/lib/mock-data";
 
 export async function getSemesterTracker() {
   const supabase = await createClient();
@@ -24,7 +25,8 @@ export async function getSemesterTracker() {
     nextDueLabel: c.next_due_label,
     status: c.status,
     notes: c.notes,
-    color: c.color
+    color: c.color,
+    type: c.type || 'theory'
   }));
 }
 
@@ -35,7 +37,7 @@ export async function getSemesterTracker() {
 
 export async function createSemesterClass(
   subject: string, instructor: string, next_due: string, 
-  next_due_label: string, status: string, notes: string, color: string
+  next_due_label: string, status: string, notes: string, color: string, type: SubjectType = 'theory'
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -43,14 +45,14 @@ export async function createSemesterClass(
 
   const { error } = await supabase
     .from("study_classes")
-    .insert([{ subject, instructor, next_due, next_due_label, status, notes, color, user_id: user.id }]);
+    .insert([{ subject, instructor, next_due, next_due_label, status, notes, color, type, user_id: user.id }]);
 
   if (error) throw error;
 }
 
 export async function editSemesterClass(
   id: string, subject: string, instructor: string, next_due: string, 
-  next_due_label: string, status: string, notes: string, color: string
+  next_due_label: string, status: string, notes: string, color: string, type: SubjectType = 'theory'
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -58,7 +60,7 @@ export async function editSemesterClass(
 
   const { error } = await supabase
     .from("study_classes")
-    .update({ subject, instructor, next_due, next_due_label, status, notes, color })
+    .update({ subject, instructor, next_due, next_due_label, status, notes, color, type })
     .eq("id", id)
     .eq("user_id", user.id);
 
@@ -77,6 +79,198 @@ export async function deleteSemesterClass(id: string) {
     .eq("user_id", user.id);
 
   if (error) throw error;
+}
+
+// -------------------------------------------------------------
+// DEADLINES CRUD
+// -------------------------------------------------------------
+
+export async function getDeadlinesForClass(classId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("study_deadlines")
+    .select("*")
+    .eq("class_id", classId)
+    .eq("user_id", user.id)
+    .order("due_date", { ascending: true, nullsFirst: false });
+
+  if (error || !data) return [];
+  return data.map(d => ({
+    id: d.id,
+    classId: d.class_id,
+    title: d.title,
+    dueDate: d.due_date,
+    isCompleted: d.is_completed
+  }));
+}
+
+export async function getAllDeadlines() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("study_deadlines")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("due_date", { ascending: true, nullsFirst: false });
+
+  if (error || !data) return [];
+  return data.map(d => ({
+    id: d.id,
+    classId: d.class_id,
+    title: d.title,
+    dueDate: d.due_date,
+    isCompleted: d.is_completed
+  }));
+}
+
+export async function createDeadline(classId: string, title: string, dueDate: string | null) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_deadlines")
+    .insert([{ class_id: classId, title, due_date: dueDate, user_id: user.id }]);
+
+  if (error) throw error;
+}
+
+export async function toggleDeadline(id: string, isCompleted: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_deadlines")
+    .update({ is_completed: isCompleted })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function deleteDeadline(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_deadlines")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+// -------------------------------------------------------------
+// CLASS TESTS CRUD + CALENDAR SYNC
+// -------------------------------------------------------------
+
+export async function getClassTestsForClass(classId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("study_class_tests")
+    .select("*")
+    .eq("class_id", classId)
+    .eq("user_id", user.id)
+    .order("ct_number", { ascending: true });
+
+  if (error || !data) return [];
+  return data.map(ct => ({
+    id: ct.id,
+    classId: ct.class_id,
+    ctNumber: ct.ct_number as 1 | 2,
+    date: ct.date,
+    maxMarks: ct.max_marks,
+    marksObtained: ct.marks_obtained
+  }));
+}
+
+export async function getAllClassTests() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("study_class_tests")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("ct_number", { ascending: true });
+
+  if (error || !data) return [];
+  return data.map(ct => ({
+    id: ct.id,
+    classId: ct.class_id,
+    ctNumber: ct.ct_number as 1 | 2,
+    date: ct.date,
+    maxMarks: ct.max_marks,
+    marksObtained: ct.marks_obtained
+  }));
+}
+
+export async function upsertClassTest(
+  classId: string, 
+  ctNumber: number, 
+  date: string | null, 
+  maxMarks: number = 30, 
+  marksObtained: number | null = null,
+  subjectName: string
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  // Upsert the class test
+  const { error } = await supabase
+    .from("study_class_tests")
+    .upsert(
+      { class_id: classId, ct_number: ctNumber, date, max_marks: maxMarks, marks_obtained: marksObtained, user_id: user.id },
+      { onConflict: 'class_id,ct_number' }
+    );
+
+  if (error) throw error;
+
+  // Silent calendar sync: create/update event in dashboard calendar
+  const eventTitle = `CT${ctNumber}: ${subjectName}`;
+  
+  if (date) {
+    // Check if event already exists for this CT
+    const { data: existingEvents } = await supabase
+      .from("events")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("title", eventTitle);
+    
+    if (existingEvents && existingEvents.length > 0) {
+      // Update existing event date
+      await supabase
+        .from("events")
+        .update({ date })
+        .eq("id", existingEvents[0].id)
+        .eq("user_id", user.id);
+    } else {
+      // Create new calendar event
+      await supabase
+        .from("events")
+        .insert([{ title: eventTitle, date, user_id: user.id }]);
+    }
+  } else {
+    // Delete event if date is cleared
+    await supabase
+      .from("events")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("title", eventTitle);
+  }
 }
 
 

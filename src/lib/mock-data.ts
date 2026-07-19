@@ -49,6 +49,8 @@ export interface JournalEntry {
 
 /* ── Study Tracker Data ── */
 
+export type SubjectType = 'theory' | 'lab' | 'minor_project' | 'major_project';
+
 export interface SemesterClass {
   id: string;
   subject: string;
@@ -58,6 +60,24 @@ export interface SemesterClass {
   status: 'In Progress' | 'Done' | 'Urgent';
   notes: string;
   color: 'primary' | 'secondary' | 'error' | 'tertiary';
+  type: SubjectType;
+}
+
+export interface Deadline {
+  id: string;
+  classId: string;
+  title: string;
+  dueDate: string | null;
+  isCompleted: boolean;
+}
+
+export interface ClassTest {
+  id: string;
+  classId: string;
+  ctNumber: 1 | 2;
+  date: string | null;
+  maxMarks: number;
+  marksObtained: number | null;
 }
 
 export interface WorkspaceNote {

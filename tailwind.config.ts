@@ -86,7 +86,7 @@ const config: Config = {
       /* ── Typography ── */
       fontFamily: {
         sans: ["var(--font-geist-sans)", "var(--font-inter)", "sans-serif"],
-        display: ["var(--font-geist-sans)", "var(--font-space-grotesk)", "sans-serif"],
+        display: ["var(--font-playfair)", "serif"],
         mono: ["var(--font-geist-mono)", "var(--font-jetbrains-mono)", "monospace"],
         /* M3 type-scale families */
         "headline-md": ["var(--font-geist-sans)", "sans-serif"],
@@ -160,6 +160,15 @@ const config: Config = {
       /* ── Letter Spacing ── */
       letterSpacing: {
         label: "0.1em",
+      },
+      keyframes: {
+        marquee: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-100%)" },
+        },
+      },
+      animation: {
+        marquee: "marquee 25s linear infinite",
       },
     },
   },

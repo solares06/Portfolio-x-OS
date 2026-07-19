@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Inter, Space_Grotesk, JetBrains_Mono, Playfair_Display } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import "./globals.css";
 
-/* ── Public theme fonts (kept for backward compat) ── */
+/* ── Public theme fonts ── */
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+  style: ["normal", "italic"],
+});
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -38,7 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} ${GeistSans.variable} ${GeistMono.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${inter.variable} ${spaceGrotesk.variable} ${GeistSans.variable} ${GeistMono.variable} ${jetbrainsMono.variable} ${playfair.variable} antialiased`}
       >
         <AnalyticsTracker />
         {children}
