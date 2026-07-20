@@ -36,6 +36,7 @@ import Link from "next/link";
 import SemesterClassModal from "../components/SemesterClassModal";
 import ConfirmModal from "@/components/ConfirmModal";
 import StudyConsistencyTracker from "@/components/study/StudyConsistencyTracker";
+import WeeklyGoalBoard from "@/components/study/WeeklyGoalBoard";
 
 const TYPE_CONFIG: Record<SubjectType, { label: string; icon: React.ReactNode; dotColor: string; bgAccentClass: string; textClass: string }> = {
   theory: { label: 'Theory', icon: <BookOpen className="w-3.5 h-3.5" />, dotColor: 'var(--primary-color)', bgAccentClass: 'bg-[#0ea5e9]/10 dark:bg-[#00f2ff]/10', textClass: 'text-primary' },
@@ -431,8 +432,9 @@ export default function OSStudyPage() {
           </section>
         </div>
 
-        {/* ── RIGHT: Consistency Tracker (Sidebar) ── */}
-        <div className="lg:col-span-4 lg:sticky lg:top-8 lg:self-start">
+        {/* ── RIGHT: Weekly Goals + Consistency Tracker (Sidebar) ── */}
+        <div className="lg:col-span-4 lg:sticky lg:top-8 lg:self-start space-y-6">
+          <WeeklyGoalBoard />
           <StudyConsistencyTracker />
         </div>
       </div>

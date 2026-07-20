@@ -670,3 +670,69 @@ export async function toggleStudyConsistencyDay(dateStr: string) {
     if (error) throw error;
   }
 }
+
+// -------------------------------------------------------------
+// WEEKLY STUDY GOALS
+// -------------------------------------------------------------
+
+export async function getWeeklyGoals(weekStart: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("study_weekly_goals")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("week_start", weekStart)
+    .order("created_at", { ascending: true });
+
+  if (error || !data) return [];
+  return data.map(g => ({
+    id: g.id,
+    title: g.title,
+    isCompleted: g.is_completed,
+    weekStart: g.week_start
+  }));
+}
+
+export async function createWeeklyGoal(title: string, weekStart: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_weekly_goals")
+    .insert([{ title, week_start: weekStart, user_id: user.id }]);
+
+  if (error) throw error;
+}
+
+export async function toggleWeeklyGoal(id: string, isCompleted: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_weekly_goals")
+    .update({ is_completed: isCompleted })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+export async function deleteWeeklyGoal(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("study_weekly_goals")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+

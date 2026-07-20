@@ -80,6 +80,13 @@ export interface ClassTest {
   marksObtained: number | null;
 }
 
+export interface WeeklyGoal {
+  id: string;
+  title: string;
+  isCompleted: boolean;
+  weekStart: string;
+}
+
 export interface WorkspaceNote {
   id: string;
   title: string;
